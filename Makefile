@@ -29,6 +29,7 @@ LDFLAGS += -L/usr/local/lib -L$(GRPCSOURCEPATH)libs/opt/protobuf `pkg-config --l
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
            -ldl
 endif
+MKDIR_P = mkdir -p
 PROTOC = protoc
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
@@ -40,7 +41,11 @@ BUILD_PATH = build
 
 vpath %.proto $(PROTOS_PATH)
 
-all: system-check $(BIN_PATH)/HelloClient $(BIN_PATH)/HelloServer 
+.PHONY: directories
+
+all: directories system-check $(BIN_PATH)/HelloClient $(BIN_PATH)/HelloServer 
+
+directories: bin_dir build_dir
 
 $(BIN_PATH)/HelloClient: $(BUILD_PATH)/HelloWorld.pb.o $(BUILD_PATH)/HelloWorld.grpc.pb.o $(BUILD_PATH)/HelloClient.o
 	$(CXX) $^ $(LDFLAGS) -o $@
@@ -60,8 +65,14 @@ $(BUILD_PATH)/%.grpc.pb.cc: %.proto
 $(BUILD_PATH)/%.pb.cc: %.proto
 	$(PROTOC) -I $(PROTOS_PATH) --cpp_out=$(BUILD_PATH) $<
 
+bin_dir:
+	${MKDIR_P} ${BIN_PATH}
+
+build_dir:
+	${MKDIR_P} ${BUILD_PATH}
+
 clean:
-	rm -f build/*
+	rm -rf ${BIN_PATH} ${BUILD_PATH}
 
 # The following is to test your system and ensure a smoother experience.
 # They are by no means necessary to actually compile a grpc-enabled software.
