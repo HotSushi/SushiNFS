@@ -40,20 +40,19 @@ BUILD_PATH = build
 
 vpath %.proto $(PROTOS_PATH)
 
-all: system-check HelloClient HelloServer 
+all: system-check $(BIN_PATH)/HelloClient $(BIN_PATH)/HelloServer 
+
+$(BIN_PATH)/HelloClient: $(BUILD_PATH)/HelloWorld.pb.o $(BUILD_PATH)/HelloWorld.grpc.pb.o $(BUILD_PATH)/HelloClient.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+$(BIN_PATH)/HelloServer: $(BUILD_PATH)/HelloWorld.pb.o $(BUILD_PATH)/HelloWorld.grpc.pb.o $(BUILD_PATH)/HelloServer.o
+	$(CXX) $^ $(LDFLAGS) -o $@
 
 $(BUILD_PATH)/HelloClient.o: $(SOURCE_PATH)/client/HelloClient.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS)  -c -o $(BUILD_PATH)/HelloClient.o $(SOURCE_PATH)/client/HelloClient.cpp
 
-HelloClient: $(BUILD_PATH)/HelloWorld.pb.o $(BUILD_PATH)/HelloWorld.grpc.pb.o $(SOURCE_PATH)/client/HelloClient.o
-	$(CXX) $^ $(LDFLAGS) -o $@
-
 $(BUILD_PATH)/HelloServer.o: $(SOURCE_PATH)/server/HelloServer.cpp
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS)  -c -o $(BUILD_PATH)/HelloServer.o $(SOURCE_PATH)/server/HelloServer.cpp
-
-HelloServer: $(BUILD_PATH)/HelloWorld.pb.o $(BUILD_PATH)/HelloWorld.grpc.pb.o $(SOURCE_PATH)/server/HelloServer.o
-	$(CXX) $^ $(LDFLAGS) -o $@
-
 
 $(BUILD_PATH)/%.grpc.pb.cc: %.proto
 	$(PROTOC) -I $(PROTOS_PATH) --grpc_out=$(BUILD_PATH) --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH) $<
@@ -114,5 +113,13 @@ ifneq ($(HAS_PLUGIN),true)
 	@echo
 endif
 ifneq ($(SYSTEM_OK),true)
+	@false
+endif
+ifeq ($(GRPC_SOURCE),)
+	@echo " DEPENDENCY ERROR"
+	@echo 
+	@echo "Please set the environment variable GRPC_SOURCE to built grpc source"
+	@echo "directory."
+	@echo
 	@false
 endif
