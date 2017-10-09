@@ -41,11 +41,13 @@ BUILD_PATH = build
 
 vpath %.proto $(PROTOS_PATH)
 
-.PHONY: directories
+.PHONY: directories googlerpc
 
-all: directories system-check $(BIN_PATH)/HelloClient $(BIN_PATH)/HelloServer 
+all: directories googlerpc system-check $(BIN_PATH)/HelloClient $(BIN_PATH)/HelloServer 
 
 directories: bin_dir build_dir
+
+googlerpc: $(BUILD_PATH)/GRPC.grpc.pb.cc $(BUILD_PATH)/GRPC.pb.cc
 
 $(BIN_PATH)/HelloClient: $(BUILD_PATH)/HelloWorld.pb.o $(BUILD_PATH)/HelloWorld.grpc.pb.o $(BUILD_PATH)/HelloClient.o
 	$(CXX) $^ $(LDFLAGS) -o $@

@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+// The greeting service definition.
+service Grpc {
+
+	// Get attributes
+  rpc GetAttributes (GetAttributesRequestObject) returns (GetAttributesResponseObject) {}
+
+  // Read directoy
+  rpc ReadDirectory (ReadDirectoryRequestObject) returns (ReadDirectoryResponseObject) {}
+
+  // Read
+  rpc Read (ReadRequestObject) returns (ReadResponseObject) {}
+
+ }
+
+// For struct pointer objects
+message StructData {
+	bytes binary = 1;
+	int32 length = 2;
+}
+
+message ReadDirectorySingleObject {
+	string name = 1;
+	StructData st = 2;
+}
+
+message GetAttributesRequestObject {
+	string path = 1;
+	StructData st = 2;
+}
+
+message GetAttributesResponseObject {
+	int32 status = 1;
+	StructData st = 2;
+}
+
+message ReadDirectoryRequestObject {
+	string path = 1;
+}
+
+message ReadDirectoryResponseObject {
+	repeated ReadDirectorySingleObject objects = 1;
+	int32 status = 2;
+}
+
+message ReadRequestObject {
+	int32 size  = 1;
+	int32 offset = 2;
+	string path = 3;
+}
+
+message ReadResponseObject {
+	string data = 1;
+}
