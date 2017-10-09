@@ -1,3 +1,5 @@
+#ifndef GRPC_CLIENT_H
+#define GRPC_CLIENT_H 
 #include <grpc++/grpc++.h>
 #include "build/GRPC.grpc.pb.h"
 #include "src/helpers/GeneralHelpers.h"
@@ -18,3 +20,5 @@ class GrpcClient {
 	private:
 		std::unique_ptr<Grpc::Stub> stub_;
 };
+
+#endif /* GRPC_CLIENT_H */
