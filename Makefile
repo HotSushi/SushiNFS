@@ -47,12 +47,12 @@ all: directories googlerpc system-check $(BIN_PATH)/HelloClient $(BIN_PATH)/Hell
 
 directories: bin_dir build_dir
 
-googlerpc: $(BUILD_PATH)/GRPC.grpc.pb.cc $(BUILD_PATH)/GRPC.pb.cc $(BUILD_PATH)/GeneralHelpers.o #$(BUILD_PATH)/GrpcClient.o
+googlerpc: $(BUILD_PATH)/GRPC.grpc.pb.cc $(BUILD_PATH)/GRPC.pb.cc $(BUILD_PATH)/GeneralHelpers.o $(BUILD_PATH)/GrpcClient.o
 
 $(BUILD_PATH)/GeneralHelpers.o: $(SOURCE_PATH)/helpers/GeneralHelpers.h $(SOURCE_PATH)/helpers/GeneralHelpers.cpp $(BUILD_PATH)/GRPC.grpc.pb.cc
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS)  -c -o $(BUILD_PATH)/GeneralHelpers.o $(SOURCE_PATH)/helpers/GeneralHelpers.cpp
 
-$(BUILD_PATH)/GrpcClient.o: $(SOURCE_PATH)/client/GrpcClient.cpp $(SOURCE_PATH)/client/GrpcClient.h
+$(BUILD_PATH)/GrpcClient.o: $(SOURCE_PATH)/client/GrpcClient.cpp $(SOURCE_PATH)/client/GrpcClient.h $(BUILD_PATH)/GRPC.grpc.pb.cc
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS)  -c -o $(BUILD_PATH)/GrpcClient.o $(SOURCE_PATH)/client/GrpcClient.cpp
 
 $(BIN_PATH)/HelloClient: $(BUILD_PATH)/HelloWorld.pb.o $(BUILD_PATH)/HelloWorld.grpc.pb.o $(BUILD_PATH)/HelloClient.o

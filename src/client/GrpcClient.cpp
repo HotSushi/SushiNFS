@@ -7,14 +7,15 @@ int GrpcClient::getAttributes(std::string path, struct stat *st){
 	// Container request
 	GetAttributesRequestObject getAttributesRequestObject;
 	getAttributesRequestObject.set_path(path);
-	getAttributesRequestObject.set_st(toGstat(st));
+	Stat gstat = toGstat(st);
+	getAttributesRequestObject.set_allocated_st(&gstat);
 	ClientContext context;
 
 	// Container response
 	GetAttributesResponseObject getAttributesResponseObject;
 
 	// Actual call
-	Status status = stub_->GetAttributes(&context, getAttributesRequestObject, &getAttributesResponseObject)
+	Status status = stub_->GetAttributes(&context, getAttributesRequestObject, &getAttributesResponseObject);
 
 	if(status.ok()){
 		toCstat(getAttributesResponseObject.st(), st);
@@ -23,7 +24,7 @@ int GrpcClient::getAttributes(std::string path, struct stat *st){
 	else {
 		std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
-    return "RPC failed";
+    return -1;
 	}
 }
 
@@ -37,24 +38,26 @@ std::list<DirEntry> GrpcClient::readDirectory(std::string path, int &responseCod
 	ReadDirectoryResponseObject readDirectoryResponseObject;
 
 	// Call
-	Status status = stub_->ReadDirectory(context, readDirectoryRequestObject, &readDirectoryResponseObject);
-	
+	Status status = stub_->ReadDirectory(&context, readDirectoryRequestObject, &readDirectoryResponseObject);
+	std::list<DirEntry> entries;
 	if(status.ok()){
-		std::list<DirEntry>;
 		responseCode = readDirectoryResponseObject.status();
 		for(int i=0; i<readDirectoryResponseObject.objects_size(); i++) {
-
+			DirEntry dirEntry;
+			toCstat(readDirectoryResponseObject.objects(i).st(),&dirEntry.st);
+			dirEntry.name = readDirectoryResponseObject.objects(i).name();
+			entries.push_back(dirEntry);
 		}
-		return NULL;
+		return entries;
 	}
 	else {
 		std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
-    return -1;
+    return entries;
 	}
 }
 
-int GrpcClient::read(std::string path, int offset, int size){
+std::string GrpcClient::read(std::string path, int offset, int size){
 	// Container request
 	ReadRequestObject readRequestObject;
 	readRequestObject.set_path(path);
@@ -66,8 +69,15 @@ int GrpcClient::read(std::string path, int offset, int size){
 	ReadResponseObject readResponseObject;
 
 	// Call
-	Status status = stub_->Read(context, readRequestObject, readResponseObject)
+	Status status = stub_->Read(&context, readRequestObject, &readResponseObject);
 
-	return 1;
+	if(status.ok()){
+		return readResponseObject.data();
+	}
+	else {
+		std::cout << status.error_code() << ": " << status.error_message()
+              << std::endl;
+    return "RPC FAILED";
+	}
 
 }
