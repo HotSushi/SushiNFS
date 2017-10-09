@@ -23,9 +23,9 @@ message Stat {
 	uint64 st_gid = 6;
 	uint64 st_rdev = 7;
 	uint64 st_size = 8;
-	uint64 st_atime = 9;
-	uint64 st_mtime = 10;
-	uint64 st_ctime = 11;
+	uint64 st_catime = 9;
+	uint64 st_cmtime = 10;
+	uint64 st_cctime = 11;
 	uint64 st_blksize = 12;
 	uint64 st_blocks = 13;
 	uint64 st_attr = 14;
