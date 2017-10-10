@@ -55,6 +55,9 @@ $(BUILD_PATH)/GeneralHelpers.o: $(SOURCE_PATH)/helpers/GeneralHelpers.h $(SOURCE
 $(BUILD_PATH)/GrpcClient.o: $(SOURCE_PATH)/client/GrpcClient.cpp $(SOURCE_PATH)/client/GrpcClient.h
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS)  -c -o $(BUILD_PATH)/GrpcClient.o $(SOURCE_PATH)/client/GrpcClient.cpp
 
+$(BUILD_PATH)/GrpcServer.o: $(SOURCE_PATH)/server/GrpcServer.cpp $(SOURCE_PATH)/server/GrpcServer.h
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $(BUILD_PATH)/GrpcServer.o $(SOURCE_PATH)/server/GrpcServer.cpp
+
 $(BIN_PATH)/HelloClient: $(BUILD_PATH)/HelloWorld.pb.o $(BUILD_PATH)/HelloWorld.grpc.pb.o $(BUILD_PATH)/HelloClient.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
