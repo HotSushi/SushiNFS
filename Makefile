@@ -18,16 +18,19 @@ HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
 GRPCSOURCEPATH = ${GRPC_SOURCE}
 CXX = g++
-CPPFLAGS += -I$(GRPCSOURCEPATH)third_party/protobuf/src -I. -pthread `pkg-config --cflags grpc`
+CPPFLAGS += -I$(GRPCSOURCEPATH)third_party/protobuf/src -I. -pthread `pkg-config --cflags grpc`\
+             `pkg-config fuse3 --cflags --libs`
 CXXFLAGS += -std=c++11
 ifeq ($(SYSTEM),Darwin)
 LDFLAGS += -L/usr/local/lib -L$(GRPCSOURCEPATH)libs/opt/protobuf `pkg-config --libs grpc++ grpc`\
+            `pkg-config fuse3 --cflags --libs`\
            -lgrpc++_reflection\
            -ldl
 else
 LDFLAGS += -L/usr/local/lib -L$(GRPCSOURCEPATH)libs/opt/protobuf `pkg-config --libs grpc++ grpc`\
+		    `pkg-config fuse3 --cflags --libs`\
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed\
-           -ldl
+           -ldl -std=c++11
 endif
 MKDIR_P = mkdir -p
 PROTOC = protoc
@@ -43,16 +46,22 @@ vpath %.proto $(PROTOS_PATH)
 
 .PHONY: directories googlerpc
 
-all: directories googlerpc system-check $(BIN_PATH)/HelloClient $(BIN_PATH)/HelloServer 
+all: directories system-check $(BIN_PATH)/Client #$(BIN_PATH)/HelloClient $(BIN_PATH)/HelloServer 
 
 directories: bin_dir build_dir
 
-googlerpc: $(BUILD_PATH)/GRPC.grpc.pb.cc $(BUILD_PATH)/GRPC.pb.cc $(BUILD_PATH)/GeneralHelpers.o #$(BUILD_PATH)/GrpcClient.o
+#googlerpc: $(BUILD_PATH)/GRPC.grpc.pb.cc $(BUILD_PATH)/GRPC.pb.cc $(BUILD_PATH)/GeneralHelpers.o $(BUILD_PATH)/GrpcClient.o
+
+$(BIN_PATH)/Client: $(BUILD_PATH)/GRPC.pb.o $(BUILD_PATH)/GRPC.grpc.pb.o $(BUILD_PATH)/GeneralHelpers.o $(BUILD_PATH)/GrpcClient.o $(BUILD_PATH)/Client.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+$(BUILD_PATH)/Client.o: $(SOURCE_PATH)/client/Client.cpp
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS)  -c -o $(BUILD_PATH)/Client.o $(SOURCE_PATH)/client/Client.cpp
 
 $(BUILD_PATH)/GeneralHelpers.o: $(SOURCE_PATH)/helpers/GeneralHelpers.h $(SOURCE_PATH)/helpers/GeneralHelpers.cpp $(BUILD_PATH)/GRPC.grpc.pb.cc
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS)  -c -o $(BUILD_PATH)/GeneralHelpers.o $(SOURCE_PATH)/helpers/GeneralHelpers.cpp
 
-$(BUILD_PATH)/GrpcClient.o: $(SOURCE_PATH)/client/GrpcClient.cpp $(SOURCE_PATH)/client/GrpcClient.h
+$(BUILD_PATH)/GrpcClient.o: $(SOURCE_PATH)/client/GrpcClient.cpp $(SOURCE_PATH)/client/GrpcClient.h $(BUILD_PATH)/GRPC.grpc.pb.cc
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS)  -c -o $(BUILD_PATH)/GrpcClient.o $(SOURCE_PATH)/client/GrpcClient.cpp
 
 $(BIN_PATH)/HelloClient: $(BUILD_PATH)/HelloWorld.pb.o $(BUILD_PATH)/HelloWorld.grpc.pb.o $(BUILD_PATH)/HelloClient.o
