@@ -63,4 +63,5 @@ message ReadRequestObject {
 
 message ReadResponseObject {
 	string data = 1;
+	int32 status = 2;
 }
