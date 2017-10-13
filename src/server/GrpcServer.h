@@ -3,10 +3,13 @@
 #include <string>
 
 #include <grpc++/grpc++.h>
-#include <fuse.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <fcntl.h>
 
 #include "src/helpers/GeneralHelpers.h"
 
@@ -14,10 +17,9 @@ using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
-using GRPC::Grpc;
 
 
-class GrpcServiceImpl final : public Grpc::Service {
+class GrpcServiceImpl  final : public Grpc::Service {
 
 	Status GetAttributes(ServerContext* context, GetAttributesRequestObject* request, 
                 GetAttributesResponseObject* response);

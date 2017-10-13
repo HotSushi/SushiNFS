@@ -46,7 +46,7 @@ vpath %.proto $(PROTOS_PATH)
 
 .PHONY: directories googlerpc
 
-all: directories system-check $(BIN_PATH)/Client #$(BIN_PATH)/HelloClient $(BIN_PATH)/HelloServer 
+all: directories system-check $(BIN_PATH)/Client $(BIN_PATH)/Server #$(BIN_PATH)/HelloClient $(BIN_PATH)/HelloServer 
 
 directories: bin_dir build_dir
 
