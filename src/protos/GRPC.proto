@@ -12,6 +12,38 @@ service Grpc {
   // Read
   rpc Read (ReadRequestObject) returns (ReadResponseObject) {}
 
+  // Make node
+  rpc Mknod (MknodRequestObject) returns (MknodResponseObject) {}
+
+  // MakeDir
+  rpc MkDir (MkDirRequestObject) returns (MkDirResponseObject) {}
+
+  // RmDir
+  rpc RmDir (RmDirRequestObject) returns (RmDirResponseObject) {}
+
+  // Rename
+  rpc Rename (RenameRequestObject) returns (RenameResponseObject) {}
+
+  // Truncate
+  rpc Truncate (TruncateRequestObject) returns (TruncateResponseObject) {}
+
+  // Create
+  rpc Create (CreateRequestObject) returns (CreateResponseObject) {}
+
+  // Open
+  rpc Open (OpenRequestObject) returns (OpenResponseObject) {}
+
+  // Write
+  rpc Write (WriteRequestObject) returns (WriteResponseObject) {}
+
+  // Release
+  rpc Release (ReleaseRequestObject) returns (ReleaseResponseObject) {}
+
+  // Fsync
+  rpc Fsync (FsyncRequestObject) returns (FsyncResponseObject) {}  
+
+  // Unlink
+  rpc Unlink (UnlinkRequestObject) returns (UnlinkResponseObject) {}
  }
 
 message Stat {
@@ -31,6 +63,107 @@ message Stat {
 	uint64 st_attr = 14;
 }
 
+message FuseFileInfo {
+	uint64 fh = 1;
+}
+
+message UnlinkRequestObject {
+	string path = 1;
+}
+
+message UnlinkResponseObject {
+	int32 status = 1;
+}
+
+message FsyncRequestObject {
+	string path = 1;
+	int32 isDataSync = 2;
+	FuseFileInfo fileInfo = 3;
+}
+
+message FsyncResponseObject {
+	int32 status = 1;
+	FuseFileInfo fileInfo = 2;
+}
+
+message ReleaseRequestObject {
+	string path = 1;
+	FuseFileInfo fileInfo = 2;
+}
+
+message ReleaseResponseObject {
+	int32 status = 1;
+	FuseFileInfo fileInfo = 2;
+}
+
+message OpenRequestObject {
+	string path = 1;
+	FuseFileInfo fileInfo = 2;
+}
+
+message OpenResponseObject {
+	int32 status = 1;
+	FuseFileInfo fileInfo = 2;
+}
+
+message CreateRequestObject {
+	string path = 1;
+	uint64 mode = 2;
+	FuseFileInfo fileInfo = 3;
+}
+
+message CreateResponseObject {
+	int32 status = 1;
+	FuseFileInfo fileInfo = 2;
+}
+
+message TruncateRequestObject {
+	string path = 1;
+	string size = 2;
+	FuseFileInfo fileInfo = 3;
+}
+
+message TruncateResponseObject {
+	int32 status = 1;
+	FuseFileInfo fileInfo = 2;
+}
+
+message RenameRequestObject {
+	string from = 1;
+	string to = 2;
+}
+
+message RenameResponseObject {
+	int32 status = 1;
+}
+
+message RmDirRequestObject {
+	string path = 1;
+}
+
+message RmDirResponseObject {
+	int32 status = 1;
+}
+
+message MkDirRequestObject {
+	string path = 1;
+	uint64 mode = 2;
+}
+
+message MkDirResponseObject {
+	int32 status = 1;
+}
+
+message MknodRequestObject {
+	string path = 1;
+	uint64 mode = 2;
+	uint64 rdev = 3;
+}
+
+message MknodResponseObject {
+	int32 status = 1;
+}
+
 message ReadDirectorySingleObject {
 	string name = 1;
 	Stat st = 2;
@@ -48,6 +181,7 @@ message GetAttributesResponseObject {
 
 message ReadDirectoryRequestObject {
 	string path = 1;
+	FuseFileInfo fileInfo = 2;
 }
 
 message ReadDirectoryResponseObject {
@@ -59,6 +193,7 @@ message ReadRequestObject {
 	int32 size  = 1;
 	int32 offset = 2;
 	string path = 3;
+	FuseFileInfo fileInfo = 4;
 }
 
 message ReadResponseObject {
