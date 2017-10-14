@@ -32,7 +32,7 @@ static int do_read( const char *path, char *buffer, size_t size, off_t offset, s
 
 static struct fuse_operations operations;
 
-void setFuseOperations(struct fuse_operations fo){
+void setFuseOperations(struct fuse_operations &fo){
 	//memset(fo, 0, sizeof(struct fuse_operations));
 	fo.getattr = &do_getattr;
 	fo.readdir = &do_readdir;

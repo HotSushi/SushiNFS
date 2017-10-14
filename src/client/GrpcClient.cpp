@@ -7,8 +7,7 @@ int GrpcClient::getAttributes(std::string path, struct stat *st){
 	// Container request
 	GetAttributesRequestObject getAttributesRequestObject;
 	getAttributesRequestObject.set_path(path);
-	Stat gstat = toGstat(st);
-	getAttributesRequestObject.set_allocated_st(&gstat);
+	*getAttributesRequestObject.mutable_st() = toGstat(st);
 	ClientContext context;
 
 	// Container response

@@ -21,13 +21,13 @@ using grpc::Status;
 
 class GrpcServiceImpl  final : public Grpc::Service {
 
-	Status GetAttributes(ServerContext* context, GetAttributesRequestObject* request, 
+	Status GetAttributes(ServerContext* context, const GetAttributesRequestObject* request, 
                 GetAttributesResponseObject* response);
 
-	Status ReadDirectory(ServerContext* context, ReadDirectoryRequestObject* request, 
+	Status ReadDirectory(ServerContext* context, const ReadDirectoryRequestObject* request, 
                 ReadDirectoryResponseObject* response);
 
-	Status Read(ServerContext* context, ReadRequestObject* request, 
+	Status Read(ServerContext* context, const ReadRequestObject* request, 
                 ReadResponseObject* response);
 
 };

@@ -4,7 +4,7 @@
 // Logic and data behind the server's behavior.
 // class GrpcServiceImpl final : public Grpc::Service {
 
-  Status GrpcServiceImpl::GetAttributes(ServerContext* context, GetAttributesRequestObject* request, 
+  Status GrpcServiceImpl::GetAttributes(ServerContext* context, const GetAttributesRequestObject* request, 
                 GetAttributesResponseObject* response) {
 
     
@@ -27,9 +27,8 @@
 
       // newData->set_binary(temp);
       // newData->set_length(sizeof(temp));
-      Stat out_st = toGstat(&st);
       response->set_status(0);
-      response->set_allocated_st(&out_st);
+      *response->mutable_st() = toGstat(&st);
       // response->st = toGstat(&st);
     }
 
@@ -37,7 +36,7 @@
 
   }
 
-  Status GrpcServiceImpl::ReadDirectory(ServerContext* context, ReadDirectoryRequestObject* request, 
+  Status GrpcServiceImpl::ReadDirectory(ServerContext* context, const ReadDirectoryRequestObject* request, 
                 ReadDirectoryResponseObject* response) {
 
 
@@ -61,8 +60,7 @@
         st.st_mode = de->d_type << 12;
 
         rd->set_name(de->d_name);
-        Stat out_st = toGstat(&st);
-        rd->set_allocated_st(&out_st);
+        *rd->mutable_st() = toGstat(&st);
       }
 
       response->set_status(0);
@@ -75,7 +73,7 @@
 
   }
 
-  Status GrpcServiceImpl::Read(ServerContext* context, ReadRequestObject* request, 
+  Status GrpcServiceImpl::Read(ServerContext* context, const ReadRequestObject* request, 
                 ReadResponseObject* response) {
 
 
