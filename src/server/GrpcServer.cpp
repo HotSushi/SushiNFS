@@ -12,8 +12,8 @@
 
     toCstat(request->st(), &st);
 
-    char *path;
-    memcpy(path, request->path().c_str(), request->path().length());
+    char *path =new char[request->path().length()+1];
+    strcpy(path, request->path().c_str());
     int res = lstat(path, &st);
     if (res == -1) {
 
@@ -45,8 +45,9 @@
     DIR *dp;
     struct dirent *de;
 
-    char *path;
-    memcpy(path, request->path().c_str(), request->path().length());
+    char *path =new char[request->path().length()+1];
+    strcpy(path, request->path().c_str());
+    
     dp = opendir(path);
     if (dp == NULL) {
       response->set_status(-errno);
@@ -80,8 +81,9 @@
       int fileDir;
       int res;
       char* buffer = new char[request->size()];
-      char *path;
-      memcpy(path, request->path().c_str(), request->path().length());
+      char *path =new char[request->path().length()+1];
+      strcpy(path, request->path().c_str());
+    
       fileDir = open(path, O_RDONLY);
       
       if (fileDir == -1) {

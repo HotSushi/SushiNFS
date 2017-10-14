@@ -20,7 +20,7 @@ GRPCSOURCEPATH = ${GRPC_SOURCE}
 CXX = g++
 CPPFLAGS += -I$(GRPCSOURCEPATH)third_party/protobuf/src -I. -pthread `pkg-config --cflags grpc`\
              `pkg-config fuse3 --cflags --libs`
-CXXFLAGS += -std=c++11
+CXXFLAGS += -std=c++11 -g
 ifeq ($(SYSTEM),Darwin)
 LDFLAGS += -L/usr/local/lib -L$(GRPCSOURCEPATH)libs/opt/protobuf `pkg-config --libs grpc++ grpc`\
             `pkg-config fuse3 --cflags --libs`\
@@ -67,10 +67,10 @@ $(BUILD_PATH)/Server.o: $(SOURCE_PATH)/server/Server.cpp
 $(BUILD_PATH)/GeneralHelpers.o: $(SOURCE_PATH)/helpers/GeneralHelpers.h $(SOURCE_PATH)/helpers/GeneralHelpers.cpp $(BUILD_PATH)/GRPC.grpc.pb.cc
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS)  -c -o $(BUILD_PATH)/GeneralHelpers.o $(SOURCE_PATH)/helpers/GeneralHelpers.cpp
 
-$(BUILD_PATH)/GrpcClient.o: $(SOURCE_PATH)/client/GrpcClient.cpp $(SOURCE_PATH)/client/GrpcClient.h $(BUILD_PATH)/GRPC.grpc.pb.cc
+$(BUILD_PATH)/GrpcClient.o: $(SOURCE_PATH)/client/GrpcClient.cpp $(SOURCE_PATH)/client/GrpcClient.h $(BUILD_PATH)/GRPC.grpc.pb.cc $(BUILD_PATH)/GRPC.pb.cc
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS)  -c -o $(BUILD_PATH)/GrpcClient.o $(SOURCE_PATH)/client/GrpcClient.cpp
 
-$(BUILD_PATH)/GrpcServer.o: $(SOURCE_PATH)/server/GrpcServer.cpp $(SOURCE_PATH)/server/GrpcServer.h $(BUILD_PATH)/GRPC.grpc.pb.cc
+$(BUILD_PATH)/GrpcServer.o: $(SOURCE_PATH)/server/GrpcServer.cpp $(SOURCE_PATH)/server/GrpcServer.h $(BUILD_PATH)/GRPC.grpc.pb.cc $(BUILD_PATH)/GRPC.pb.cc
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c -o $(BUILD_PATH)/GrpcServer.o $(SOURCE_PATH)/server/GrpcServer.cpp
 
 $(BIN_PATH)/HelloClient: $(BUILD_PATH)/HelloWorld.pb.o $(BUILD_PATH)/HelloWorld.grpc.pb.o $(BUILD_PATH)/HelloClient.o
