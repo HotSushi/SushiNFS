@@ -35,3 +35,13 @@ Stat toGstat(struct stat *st){
 	// gstat.set_st_attr(st->st_attr);
 	return gstat;
 }
+
+FuseFileInfo toGFileInfo(struct fuse_file_info *fi){
+	FuseFileInfo fuseFileInfo;
+	fuseFileInfo.set_fh(fi->fh);
+	return fuseFileInfo;
+}
+
+void toCFileInfo(FuseFileInfo fuseFileInfo, struct fuse_file_info *fi){
+	fi->fh = fuseFileInfo.fh();
+}

@@ -30,13 +30,92 @@ static int do_read( const char *path, char *buffer, size_t size, off_t offset, s
 	return strlen(readData.c_str());
 }
 
+static int do_mknod(const char *path, mode_t mode, dev_t rdev)
+{
+	std::string pathstr(path);
+	return grpcClient.makeNode(pathstr, mode, rdev);
+}
+
+static int do_mkdir(const char *path, mode_t mode)
+{
+	std::string pathstr(path);
+	return grpcClient.makeDir(pathstr, mode);
+}
+
+static int do_rmdir(const char *path)
+{
+	std::string pathstr(path);
+	return grpcClient.rmDir(pathstr);
+}
+
+static int do_rename(const char *from, const char *to, unsigned int flags)
+{
+	std::string fromstr(from);
+	std::string tostr(to);
+	return grpcClient.rename(fromstr, tostr);
+
+}
+
+static int do_truncate(const char *path, off_t size, struct fuse_file_info *fi)
+{
+	std::string pathstr(path);
+	return grpcClient.truncate(pathstr, size, fi);
+}
+
+static int do_create(const char *path, mode_t mode, struct fuse_file_info *fi)
+{
+	std::string pathstr(path);
+	return grpcClient.create(pathstr, mode, fi);
+}
+
+static int do_open(const char *path, struct fuse_file_info *fi)
+{
+	std::string pathstr(path);
+	return grpcClient.open(pathstr, fi);
+}
+
+static int do_release(const char *path, struct fuse_file_info *fi)
+{
+	std::string pathstr(path);
+	return grpcClient.release(pathstr, fi);
+}
+
+static int do_fsync(const char *path, int isdatasync, struct fuse_file_info* fi)
+{
+	std::string pathstr(path);
+	return grpcClient.fsync(pathstr, isdatasync, fi);	
+}
+
+static int do_unlink(const char *path)
+{
+	std::string pathstr(path);
+	return grpcClient.unlink(pathstr);
+}
+
+static int do_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
+{
+	std::string pathstr(path);
+	std::string bufstr(path);
+	return grpcClient.write(pathstr, bufstr, size, offset, fi);
+}
+
 static struct fuse_operations operations;
 
 void setFuseOperations(struct fuse_operations &fo){
-	//memset(fo, 0, sizeof(struct fuse_operations));
 	fo.getattr = &do_getattr;
 	fo.readdir = &do_readdir;
 	fo.read = &do_read; 
+	fo.mknod = &do_mknod;
+	fo.mkdir = &do_mkdir;
+	fo.rmdir = &do_rmdir;
+	fo.rename = &do_rename;
+	fo.truncate = &do_truncate;
+	fo.create = &do_create;
+	fo.open = &do_open;
+	fo.release = &do_release;
+	fo.fsync = &do_fsync;
+	fo.unlink = &do_unlink;
+	fo.write = &do_write;
 }
 
 int main( int argc, char *argv[] )
