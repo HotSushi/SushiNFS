@@ -18,4 +18,9 @@ Stat toGstat(struct stat *st);
 FuseFileInfo toGFileInfo(struct fuse_file_info *fi);
 
 void toCFileInfo(FuseFileInfo fuseFileInfo, struct fuse_file_info *fi);
+
+TimeSpec toGTimeSpec(const struct timespec *ts);
+
+void toCTimeSpec(TimeSpec timeSpec,struct timespec *ts);
+
 #endif /* GENERAL_HELPERS_H */

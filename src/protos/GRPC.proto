@@ -44,6 +44,9 @@ service Grpc {
 
   // Unlink
   rpc Unlink (UnlinkRequestObject) returns (UnlinkResponseObject) {}
+
+  // Utimens
+  rpc Utimens (UtimensRequestObject) returns (UtimensResponseObject) {}
  }
 
 message Stat {
@@ -65,6 +68,24 @@ message Stat {
 
 message FuseFileInfo {
 	uint64 fh = 1;
+}
+
+message TimeSpec {
+	uint64 asec = 1;
+	uint32 ansec = 2;
+	uint64 msec = 3;
+	uint32 mnsec = 4;
+}
+
+message UtimensRequestObject {
+	string path = 1;
+	TimeSpec timeSpec = 2;
+	FuseFileInfo fileInfo = 3;
+}
+
+message UtimensResponseObject {
+	int32 status = 1;
+	FuseFileInfo fileInfo = 2;
 }
 
 message UnlinkRequestObject {

@@ -30,4 +30,40 @@ class GrpcServiceImpl  final : public Grpc::Service {
 	Status Read(ServerContext* context, const ReadRequestObject* request, 
                 ReadResponseObject* response);
 
+	Status Mknod(ServerContext* context, const MknodRequestObject* request, 
+                MknodResponseObject* response);
+
+	Status MkDir(ServerContext* context, const MkDirRequestObject* request, 
+                MkDirResponseObject* response);
+
+	Status RmDir(ServerContext* context, const RmDirRequestObject* request, 
+                RmDirResponseObject* response);
+
+	Status Rename(ServerContext* context, const RenameRequestObject* request, 
+                RenameResponseObject* response);
+
+	Status Truncate(ServerContext* context, const TruncateRequestObject* request, 
+                TruncateResponseObject* response);
+
+	Status Create(ServerContext* context, const CreateRequestObject* request, 
+                CreateResponseObject* response);
+
+	Status Open(ServerContext* context, const OpenRequestObject* request, 
+            	OpenResponseObject* response);
+
+	Status Write(ServerContext* context, const WriteRequestObject* request, 
+            	WriteResponseObject* response);
+
+	Status Release(ServerContext* context, const ReleaseRequestObject* request, 
+        		ReleaseResponseObject* response);
+
+	Status Fsync(ServerContext* context, const FsyncRequestObject* request, 
+        		FsyncResponseObject* response);
+
+	Status Unlink(ServerContext* context, const UnlinkRequestObject* request, 
+        		UnlinkResponseObject* response);
+
+  	Status Utimens(ServerContext* context, const UtimensRequestObject* request, 
+              	UtimensResponseObject* response);
+
 };

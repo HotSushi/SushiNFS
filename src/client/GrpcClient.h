@@ -27,6 +27,7 @@ class GrpcClient {
 		int fsync(std::string path, int isdatasync, struct fuse_file_info* fi);
 		int unlink(std::string path);
 		int write(std::string path, std::string buffer, int size, int offset, struct fuse_file_info* fi);
+		int utimens(std::string path,const struct timespec *ts, struct fuse_file_info *fi);
 	private:
 		std::unique_ptr<Grpc::Stub> stub_;
 };

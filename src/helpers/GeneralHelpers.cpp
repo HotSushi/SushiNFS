@@ -45,3 +45,20 @@ FuseFileInfo toGFileInfo(struct fuse_file_info *fi){
 void toCFileInfo(FuseFileInfo fuseFileInfo, struct fuse_file_info *fi){
 	fi->fh = fuseFileInfo.fh();
 }
+
+TimeSpec toGTimeSpec(const struct timespec *ts) {
+	TimeSpec timeSpec;
+	timeSpec.set_asec(ts[0].tv_sec);
+	timeSpec.set_ansec(ts[0].tv_nsec);
+	timeSpec.set_msec(ts[1].tv_sec);
+	timeSpec.set_mnsec(ts[1].tv_nsec);
+	return timeSpec;
+}
+
+void toCTimeSpec(TimeSpec timeSpec,struct timespec *ts) {
+	ts[0].tv_sec = timeSpec.asec();
+	ts[0].tv_nsec = timeSpec.ansec();
+	ts[1].tv_sec = timeSpec.msec();
+	ts[1].tv_nsec = timeSpec.mnsec();
+}
+
