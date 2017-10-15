@@ -63,4 +63,7 @@ class GrpcServiceImpl  final : public Grpc::Service {
 	Status Unlink(ServerContext* context, const UnlinkRequestObject* request, 
         		UnlinkResponseObject* response);
 
+  	Status Utimens(ServerContext* context, const UtimensRequestObject* request, 
+              	UtimensResponseObject* response);
+
 };

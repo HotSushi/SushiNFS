@@ -342,4 +342,31 @@ int GrpcClient::write(std::string path, std::string buffer, int size, int offset
     return -1;
 	}
 }
+
+int GrpcClient::utimens(std::string path,const struct timespec *ts, struct fuse_file_info* fi)
+{
+	UtimensRequestObject utimensRequestObject;
+	utimensRequestObject.set_path(path);
+	*utimensRequestObject.mutable_timespec() = toGTimeSpec(ts);
+	*utimensRequestObject.mutable_fileinfo() = toGFileInfo(fi);
+	
+	ClientContext context;
+
+	// Container response
+	UtimensResponseObject utimensResponseObject;
+
+	// Call
+	Status status = stub_->Utimens(&context, utimensRequestObject, &utimensResponseObject);
+
+	toCFileInfo(utimensResponseObject.fileinfo(), fi);
+
+	if(status.ok()){
+		return utimensResponseObject.status();
+	}
+	else {
+		std::cout << status.error_code() << ": " << status.error_message()
+              << std::endl;
+    return -1;
+	}
+}
 	
