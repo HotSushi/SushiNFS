@@ -11,15 +11,16 @@
     struct stat st;
 
     toCstat(request->st(), &st);
-
+    std::cout <<"------------------------------------------------\n";
+    std::cout << "GetAttributes : path passed - " << request->path() << "\n";
     char *path =new char[request->path().length()+1];
     strcpy(path, request->path().c_str());
     int res = lstat(path, &st);
     if (res == -1) {
-
+      std::cout << "GetAttributes : Error getting stat -  " << errno << " Error message - " << std::strerror(errno) <<"\n";
       response->set_status(-errno);
     } else {
-
+      // std::cout << "GetAttributes : Success getting stat \n";
       // char* temp = new char[sizeof(st)];
       // memcpy(temp, &st, sizeof(st));
 
@@ -31,6 +32,9 @@
       *response->mutable_st() = toGstat(&st);
       // response->st = toGstat(&st);
     }
+      
+    
+    std::cout <<"------------------------------------------------\n\n";
 
     return Status::OK;
 
@@ -44,30 +48,31 @@
 
     DIR *dp;
     struct dirent *de;
-
+    std::cout <<"------------------------------------------------\n";
+    std::cout << "ReadDirectory : path passed - " << request->path() << "\n";
     char *path =new char[request->path().length()+1];
     strcpy(path, request->path().c_str());
     
     dp = opendir(path);
     if (dp == NULL) {
+      std::cout << "ReadDirectory : Error getting directory path -  " << errno << "\n";
       response->set_status(-errno);
     } else {
       while ((de = readdir(dp)) != NULL) {
         struct stat st;
         ReadDirectorySingleObject* rd = response->add_objects();
 
-        memset(&st, 0, sizeof(st));
+        // memset(&st, 0, sizeof(st));
         st.st_ino = de->d_ino;
         st.st_mode = de->d_type << 12;
 
         rd->set_name(de->d_name);
         *rd->mutable_st() = toGstat(&st);
       }
-
       response->set_status(0);
     }
 
-    
+    std::cout <<"------------------------------------------------\n\n";
 
     closedir(dp);
     return Status::OK;
@@ -77,61 +82,142 @@
   Status GrpcServiceImpl::Read(ServerContext* context, const ReadRequestObject* request, 
                 ReadResponseObject* response) {
 
+      std::cout <<"------------------------------------------------\n";
+
+      std::cout << "Read : path passed - " << request->path() <<"\n";
 
       int fileDir;
       int res;
       char* buffer = new char[request->size()];
       char *path =new char[request->path().length()+1];
       strcpy(path, request->path().c_str());
+      struct fuse_file_info fi;
+      toCFileInfo(request->fileinfo(), &fi);
     
-      fileDir = open(path, O_RDONLY);
-      
+      fileDir = fi.fh;
+      std::cout << "Read: File directory using FH - " << fileDir <<"\n";
+      if (fileDir == 0) {
+        fileDir = open(path, O_RDONLY);
+        fi.fh = fileDir;
+        std::cout << "Read: File directory using open - " << fileDir <<"\n";
+      }
+
+      std::cout << "Read: got the file directory - " << fileDir <<"\n";
+
       if (fileDir == -1) {
+        std::cout << "Read: Error occured with file directory - " << errno <<"\n";
         response->set_status(-errno);
       } else {
         res = pread(fileDir, buffer, request->size(), request->offset());
         if (res == -1) {
-          response->set_status(res = -errno);
+          std::cout << "Read: Error occured with writing to file- " << errno << " Error message - " << std::strerror(errno) <<"\n";
+          response->set_status(-errno);
         }
       }
-      std::string pathstr(buffer);
-      response->set_data(pathstr);
-      close(fileDir);
+      response->set_data(buffer);
+      *response->mutable_fileinfo() = toGFileInfo(&fi);
+      std::cout <<"------------------------------------------------\n\n";
+      // close(fileDir);
       return Status::OK;
   }
 
   Status GrpcServiceImpl::Write(ServerContext* context, const WriteRequestObject* request, 
               WriteResponseObject* response) {
 
-      std::cout << "Into the server Writing method.";
+      std::cout <<"------------------------------------------------\n";
+      std::cout << "Write : path passed - " << request->path() <<"\n";
       int fileDir;
-      char *buffer = new char[request->size()];
+      //char *buffer = new char[request->data().length() + 1];
       char *path =new char[request->path().length()+1];
+      std::string buffer = request->data();
       strcpy(path, request->path().c_str());
       struct fuse_file_info fi;
       toCFileInfo(request->fileinfo(), &fi);
-      std::cout << "Write: got all the inputs sorted.";
+      std::cout << "Write: got all the inputs sorted. File header - "<< fi.fh << "\n";
 
+      //(void) fi;
       if(fi.fh == 0) {
         fileDir = open(path, O_WRONLY);
       } else {
         fileDir = fi.fh;
       }
 
-      std::cout << "Write: got the file directory";
+      std::cout << "Write: got the file directory - " << fileDir <<"\n";
+      int res;
       
       if (fileDir == -1) {
+        std::cout << "Write: Error occured with file directory - " << errno <<"\n";
         response->set_status(-errno);
       } else {
-        int res = pwrite(fileDir, buffer, request->size(), request->offset());
+        res = pwrite(fileDir, &buffer[0], request->size(), request->offset());
+        fsync(fileDir);
         if (res == -1) {
+          std::cout << "Write: Error occured with writing to file- " << errno << " Error message - " << std::strerror(errno) <<"\n";
+
           response->set_status(-errno);
         }
       }
+      std::cout <<"------------------------------------------------\n\n";
       
-      close(fileDir);
+      //close(fileDir);
+      response->set_status(0);
+      response->set_datasize(res);
+      *response->mutable_fileinfo() = toGFileInfo(&fi);
+      return Status::OK;
+  }
+
+  Status GrpcServiceImpl::Create(ServerContext* context, const CreateRequestObject* request, 
+                CreateResponseObject* response) {
+        std::cout <<"------------------------------------------------\n";
+
+        std::cout << "Create : path passed - " << request->path() <<"\n";
+        char *path =new char[request->path().length()+1];
+        strcpy(path, request->path().c_str());
+        mode_t mode = request->mode();
+        std::cout << "Create : mode passed - " << mode << "\n";
+        struct fuse_file_info fi;
+        toCFileInfo(request->fileinfo(), &fi);
+        std::cout << "Create : file flags passed - " << fi.flags <<"\n";
+        
+        //fi->flags as 0
+        int res = open(path, fi.flags, mode);
+        if (res == -1) {
+          std::cout << "Create : Error file not opened. -  " << errno <<"\n";
+          response->set_status(-errno);
+        } else {
+          fi.fh = res;
+          std::cout << "Create : Success file created - " << fi.fh <<"\n";
+          response->set_status(0);
+          *response->mutable_fileinfo() = toGFileInfo(&fi);
+        }
+        std::cout <<"------------------------------------------------\n\n";
+
+        return Status::OK;
+  }
+
+  Status GrpcServiceImpl::Open(ServerContext* context, const OpenRequestObject* request, 
+              OpenResponseObject* response) {
+
+      std::cout <<"------------------------------------------------\n";
+      std::cout << "Open : path passed - " << request->path();
+      char *path = new char[request->path().length()+1];
+      strcpy(path, request->path().c_str());
+      struct fuse_file_info fi;
+      toCFileInfo(request->fileinfo(), &fi);
+
+      std::cout << "Open : file flags passed - " << fi.flags <<"\n";
+      //fi->flags as 0
+      int res = open(path, fi.flags);
+      if (res == -1) {
+        response->set_status(-errno);
+      }
+      fi.fh = res;
+
+      std::cout << "Open : file handler passed - " << fi.fh <<"\n";
+      std::cout <<"------------------------------------------------\n\n";
       response->set_status(0);
       *response->mutable_fileinfo() = toGFileInfo(&fi);
+      
       return Status::OK;
   }
 
@@ -250,46 +336,6 @@
         return Status::OK;
   }
 
-  Status GrpcServiceImpl::Create(ServerContext* context, const CreateRequestObject* request, 
-                CreateResponseObject* response) {
-
-        char *path =new char[request->path().length()+1];
-        strcpy(path, request->path().c_str());
-        mode_t mode = request->mode();
-        struct fuse_file_info fi;
-        toCFileInfo(request->fileinfo(), &fi);
-        //fi->flags as 0
-        int res = open(path, 0, mode);
-        if (res == -1) {
-          response->set_status(-errno);
-        } else {
-          fi.fh = res;
-          response->set_status(0);
-          *response->mutable_fileinfo() = toGFileInfo(&fi);
-        }
-
-        return Status::OK;
-  }
-
-  Status GrpcServiceImpl::Open(ServerContext* context, const OpenRequestObject* request, 
-              OpenResponseObject* response) {
-
-      char *path =new char[request->path().length()+1];
-      strcpy(path, request->path().c_str());
-      struct fuse_file_info fi;
-      toCFileInfo(request->fileinfo(), &fi);
-      //fi->flags as 0
-      int res = open(path, 0);
-      if (res == -1) {
-        response->set_status(-errno);
-      }
-      fi.fh = res;
-      response->set_status(0);
-      *response->mutable_fileinfo() = toGFileInfo(&fi);
-      
-      return Status::OK;
-  }
-
   Status GrpcServiceImpl::Release(ServerContext* context, const ReleaseRequestObject* request, 
             ReleaseResponseObject* response) {
 
@@ -308,6 +354,8 @@
   Status GrpcServiceImpl::Fsync(ServerContext* context, const FsyncRequestObject* request, 
             FsyncResponseObject* response) {
 
+      std::cout <<"------------------------------------------------\n";
+      std::cout << "Fsync : path passed - " << request->path();
       char *path =new char[request->path().length()+1];
       strcpy(path, request->path().c_str());
       int isdatasync = request->isdatasync();
@@ -319,6 +367,7 @@
       (void) fi;
       response->set_status(0);
       *response->mutable_fileinfo() = toGFileInfo(&fi);
+      std::cout <<"------------------------------------------------\n";
       return Status::OK;
   }
 
@@ -343,19 +392,21 @@
 
       char *path =new char[request->path().length()+1];
       strcpy(path, request->path().c_str());
-      struct fuse_file_info fi;
-      toCFileInfo(request->fileinfo(), &fi);
+      // struct fuse_file_info fi;
+      // toCFileInfo(request->fileinfo(), &fi);
 
       struct timespec ts;
       toCTimeSpec(request->timespec(), &ts);
-      const struct timespec *ts2 = &ts;
+      const struct timespec *ts2;
+      // bcopy(ts, ts2, sizeof(ts));
+
       int res = utimensat(0, path, ts2, AT_SYMLINK_NOFOLLOW);
       if (res == -1) {
         response->set_status(-errno);
       }
 
       response->set_status(0);
-      *response->mutable_fileinfo() = toGFileInfo(&fi);
+      // *response->mutable_fileinfo() = toGFileInfo(&fi);
       
       return Status::OK;
   }
