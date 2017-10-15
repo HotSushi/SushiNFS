@@ -68,6 +68,7 @@ message Stat {
 
 message FuseFileInfo {
 	uint64 fh = 1;
+	uint32 flags = 2;
 }
 
 message TimeSpec {
@@ -130,14 +131,14 @@ message OpenResponseObject {
 message WriteRequestObject {
 	int32 size  = 1;
 	int32 offset = 5;
-	string data = 2;
+	bytes data = 2;
 	string path = 3;
 	FuseFileInfo fileInfo = 4;
 }
 
 message WriteResponseObject {
-	string data = 1;
-	int32 status = 2;
+	int32 status = 1;
+	int32 dataSize = 2;
 	FuseFileInfo fileInfo = 3;
 }
 
@@ -232,7 +233,7 @@ message ReadRequestObject {
 }
 
 message ReadResponseObject {
-	string data = 1;
+	bytes data = 1;
 	int32 status = 2;
 	FuseFileInfo fileInfo = 3;
 }

@@ -25,9 +25,9 @@ static int do_readdir( const char *path, void *buffer, fuse_fill_dir_t filler, o
 static int do_read( const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi )
 {
 	std::string pathstr(path);
-	std::string readData = grpcClient.read(pathstr, offset, size);
-	memcpy(buffer, readData.c_str(), size);
-	return strlen(readData.c_str());
+	
+	// memcpy(buffer, readData.c_str(), size);
+	return grpcClient.read(pathstr, buffer,offset, size, fi);
 }
 
 static int do_mknod(const char *path, mode_t mode, dev_t rdev)
@@ -95,8 +95,7 @@ static int do_unlink(const char *path)
 static int do_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	std::string pathstr(path);
-	std::string bufstr(path);
-	return grpcClient.write(pathstr, bufstr, size, offset, fi);
+	return grpcClient.write(pathstr, buf, size, offset, fi);
 }
 
 static int do_utimens(const char *path, const struct timespec ts[2], struct fuse_file_info *fi)
@@ -122,7 +121,7 @@ void setFuseOperations(struct fuse_operations &fo){
 	fo.fsync = &do_fsync;
 	fo.unlink = &do_unlink;
 	fo.write = &do_write;
-	fo.utimens = &do_utimens;
+	// sfo.utimens = &do_utimens;
 }
 
 int main( int argc, char *argv[] )
