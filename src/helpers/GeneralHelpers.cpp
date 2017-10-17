@@ -2,10 +2,6 @@
 
 void toCstat(Stat gstat, struct stat *st){
 
-	if (gstat.st_dev() == 0) {
-		std::cout << "Helper: error -  " << errno << ", error message - " << std::strerror(errno);
-	}
-
 	st->st_dev = gstat.st_dev();
 	st->st_ino = gstat.st_ino();
 	st->st_mode = gstat.st_mode();

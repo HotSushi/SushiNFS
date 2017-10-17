@@ -9,6 +9,40 @@ using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
 
+class Datastore{
+	
+	std::string data;
+	bool isDirty;
+	int originalOffset;
+public:
+	Datastore(void) {
+		data = "";
+		isDirty = false;
+		originalOffset = 0;
+	}
+
+	Datastore(std::string d, int offset, bool status) {
+		data = d;
+		isDirty = status;
+		originalOffset = offset;
+	}
+
+	std::string getData(void) {
+		return data;
+	}
+	bool getIsDirty(void) {
+		return isDirty;
+	}
+	int getOriginalOffset(void) {
+		return originalOffset;
+	}
+	void setValues(std::string d, int offset, bool status = false) {
+		data = d;
+		originalOffset = offset;
+		isDirty = status;
+	}
+};
+
 class GrpcClient {
 
 	public:
@@ -27,6 +61,7 @@ class GrpcClient {
 		int fsync(std::string path, int isdatasync, struct fuse_file_info* fi);
 		int unlink(std::string path);
 		int write(std::string path, const char *buf, int size, int offset, struct fuse_file_info* fi);
+		int flush(std::string path, struct fuse_file_info *fi);
 		int utimens(std::string path,const struct timespec *ts, struct fuse_file_info *fi);
 	private:
 		std::unique_ptr<Grpc::Stub> stub_;

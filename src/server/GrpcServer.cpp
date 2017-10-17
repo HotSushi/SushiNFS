@@ -116,6 +116,7 @@
       }
       response->set_data(buffer);
       *response->mutable_fileinfo() = toGFileInfo(&fi);
+      delete[] buffer;
       std::cout <<"------------------------------------------------\n\n";
       // close(fileDir);
       return Status::OK;
@@ -135,6 +136,8 @@
       toCFileInfo(request->fileinfo(), &fi);
       std::cout << "Write: got all the inputs sorted. File header - "<< fi.fh << "\n";
 
+
+
       //(void) fi;
       if(fi.fh == 0) {
         fileDir = open(path, O_WRONLY);
@@ -150,11 +153,15 @@
         response->set_status(-errno);
       } else {
         res = pwrite(fileDir, &buffer[0], request->size(), request->offset());
-        fsync(fileDir);
+        
         if (res == -1) {
           std::cout << "Write: Error occured with writing to file- " << errno << " Error message - " << std::strerror(errno) <<"\n";
-
           response->set_status(-errno);
+        }
+
+        if (request->flag()) {
+           // fsync(fi.fh);
+          close(dup(fi.fh));
         }
       }
       std::cout <<"------------------------------------------------\n\n";
@@ -315,11 +322,14 @@
   Status GrpcServiceImpl::Truncate(ServerContext* context, const TruncateRequestObject* request, 
                 TruncateResponseObject* response) {
 
+        std::cout <<"------------------------------------------------\n";
+        std::cout << "Truncate : path passed - " << request->path() << "\n";
         int res;
         char *path =new char[request->path().length()+1];
         strcpy(path, request->path().c_str());
         struct fuse_file_info fi;
         toCFileInfo(request->fileinfo(), &fi);
+        std::cout << "Truncate : FH received - " << fi.fh << "\n";
 
         if (fi.fh != 0) {
           res = ftruncate(fi.fh, request->size());
@@ -328,9 +338,10 @@
         }
 
         if (res == -1) {
+          std::cout << "Truncate : Error file not opened. -  " << errno <<"\n";
           response->set_status(-errno);
         }
-
+        std::cout <<"------------------------------------------------\n\n";
         response->set_status(0);
         *response->mutable_fileinfo() = toGFileInfo(&fi);
         return Status::OK;
@@ -339,15 +350,20 @@
   Status GrpcServiceImpl::Release(ServerContext* context, const ReleaseRequestObject* request, 
             ReleaseResponseObject* response) {
 
+      std::cout <<"------------------------------------------------\n";
+      std::cout << "Release : path passed - " << request->path() << "\n";
       char *path =new char[request->path().length()+1];
       strcpy(path, request->path().c_str());
       struct fuse_file_info fi;
       toCFileInfo(request->fileinfo(), &fi);
+      std::cout << "Release : FH received - " << fi.fh << "\n";
 
       (void) path;
       close(fi.fh);
+      std::cout << "Release : FH closed, fh - " << fi.fh << "\n";
       response->set_status(0);
       *response->mutable_fileinfo() = toGFileInfo(&fi);
+      std::cout <<"------------------------------------------------\n\n";
       return Status::OK;
   }
 
@@ -355,7 +371,7 @@
             FsyncResponseObject* response) {
 
       std::cout <<"------------------------------------------------\n";
-      std::cout << "Fsync : path passed - " << request->path();
+      std::cout << "Fsync : path passed - " << request->path() << "\n";
       char *path =new char[request->path().length()+1];
       strcpy(path, request->path().c_str());
       int isdatasync = request->isdatasync();
@@ -367,13 +383,15 @@
       (void) fi;
       response->set_status(0);
       *response->mutable_fileinfo() = toGFileInfo(&fi);
-      std::cout <<"------------------------------------------------\n";
+      std::cout <<"------------------------------------------------\n\n";
       return Status::OK;
   }
 
   Status GrpcServiceImpl::Unlink(ServerContext* context, const UnlinkRequestObject* request, 
             UnlinkResponseObject* response) {
       
+      std::cout <<"------------------------------------------------\n";
+      std::cout << "Unlink : path passed - " << request->path() << "\n";
       char *path =new char[request->path().length()+1];
       strcpy(path, request->path().c_str());
 
@@ -382,8 +400,31 @@
       if (res == -1) {
         response->set_status(-errno);
       }
-
+      std::cout <<"------------------------------------------------\n\n";
       response->set_status(0);
+      return Status::OK;
+  }
+
+  Status GrpcServiceImpl::Flush(ServerContext* context, const FlushRequestObject* request, 
+            FlushResponseObject* response) {
+
+      std::cout <<"------------------------------------------------\n";
+      std::cout << "Flush : path passed - " << request->path() << "\n";
+      char *path =new char[request->path().length()+1];
+      strcpy(path, request->path().c_str());
+      struct fuse_file_info fi;
+      toCFileInfo(request->fileinfo(), &fi);
+      std::cout << "Flush : FH received - " << fi.fh << "\n";
+
+      (void) path;
+      int res = close(dup(fi.fh));
+      response->set_status(0);
+      if (res == -1) {
+        response->set_status(-errno);
+      }
+      std::cout << "Flush : FH closed, fh - " << fi.fh << "\n";
+      *response->mutable_fileinfo() = toGFileInfo(&fi);
+      std::cout <<"------------------------------------------------\n\n";
       return Status::OK;
   }
 

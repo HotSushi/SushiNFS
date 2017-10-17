@@ -3,6 +3,10 @@
 GrpcClient::GrpcClient(std::shared_ptr<Channel> channel)
       : stub_(Grpc::NewStub(channel)) {}
 
+static std::map<int, Datastore> mainDataStore;
+
+static int bufferLimit = 65536;
+
 int GrpcClient::getAttributes(std::string path, struct stat *st){
 
 	std::cout <<"------------------------------------------------\n";
@@ -82,7 +86,8 @@ int GrpcClient::read(std::string path, char* buffer, int offset, int size, struc
 	toCFileInfo(readResponseObject.fileinfo(), fi);
 
 	if(status.ok()){
-		bcopy(readResponseObject.data().c_str(), buffer, readResponseObject.data().length());
+		// bcopy(readResponseObject.data().c_str(), buffer, readResponseObject.data().length());
+		strcpy(buffer, readResponseObject.data().c_str());
 		return readResponseObject.data().length();
 	}
 	else {
@@ -271,6 +276,7 @@ int GrpcClient::release(std::string path, struct fuse_file_info *fi){
 	toCFileInfo(releaseResponseObject.fileinfo(), fi);
 
 	if(status.ok()){
+		mainDataStore.clear();
 		return releaseResponseObject.status();
 	}
 	else {
@@ -328,7 +334,24 @@ int GrpcClient::unlink(std::string path){
 
 int GrpcClient::write(std::string path, const char *buf, int size, int offset, struct fuse_file_info* fi)
 {
+
 	WriteRequestObject writeRequestObject;
+	std::cout <<"------------------------------------------------\n";
+    std::cout << "write : path passed - " << path << "\n";
+    std::cout << "write : data size is - " << strlen(buf) << "\n";
+	
+	bool commitFlag = false;
+      if (fi->fh != 0) {
+        if (mainDataStore.find(fi->fh) != mainDataStore.end()) {
+            Datastore ds = mainDataStore.find(fi->fh)->second;
+            if (ds.getData().length() > bufferLimit) {
+              commitFlag = true;
+            }
+        }
+      }
+
+
+	writeRequestObject.set_flag(commitFlag);
 	writeRequestObject.set_path(path);
 	writeRequestObject.set_data(buf);
 	writeRequestObject.set_offset(offset);
@@ -346,7 +369,48 @@ int GrpcClient::write(std::string path, const char *buf, int size, int offset, s
 	toCFileInfo(writeResponseObject.fileinfo(), fi);
 
 	if(status.ok()){
+		if (commitFlag) {
+			if (mainDataStore.find(fi->fh) != mainDataStore.end()) {
+	            Datastore ds = mainDataStore.find(fi->fh)->second;
+	            ds.setValues("",0,false);
+	            mainDataStore.find(fi->fh)->second = ds;
+        	}
+		} else {
+			std::string temp2(buf);
+			if (mainDataStore.find(fi->fh) != mainDataStore.end()) {
+	            Datastore ds = mainDataStore.find(fi->fh)->second;
+	            ds.setValues((ds.getData() + temp2),ds.getOriginalOffset());
+	            mainDataStore.find(fi->fh)->second = ds;
+        	} else {
+        		mainDataStore.insert(std::make_pair<int, Datastore>(fi->fh,Datastore(temp2, offset, false)));
+        	}
+		}
 		return writeResponseObject.datasize();
+	} else {
+
+		std::cout << status.error_code() << ": " << status.error_message()
+              << std::endl;
+    return -1;
+	}
+	std::cout <<"------------------------------------------------\n\n";
+}
+
+int GrpcClient::flush(std::string path, struct fuse_file_info *fi){
+	FlushRequestObject flushRequestObject;
+	flushRequestObject.set_path(path);
+	*flushRequestObject.mutable_fileinfo() = toGFileInfo(fi);
+	ClientContext context;
+
+	// Container response
+	FlushResponseObject flushResponseObject;
+
+	// Call
+	Status status = stub_->Flush(&context, flushRequestObject, &flushResponseObject);
+
+	toCFileInfo(flushResponseObject.fileinfo(), fi);
+
+	if(status.ok()){
+		return flushResponseObject.status();
 	}
 	else {
 		std::cout << status.error_code() << ": " << status.error_message()

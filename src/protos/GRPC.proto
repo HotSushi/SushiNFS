@@ -45,6 +45,9 @@ service Grpc {
   // Unlink
   rpc Unlink (UnlinkRequestObject) returns (UnlinkResponseObject) {}
 
+  // Flush
+  rpc Flush (FlushRequestObject) returns (FlushResponseObject) {}
+
   // Utimens
   rpc Utimens (UtimensRequestObject) returns (UtimensResponseObject) {}
  }
@@ -85,6 +88,16 @@ message UtimensRequestObject {
 }
 
 message UtimensResponseObject {
+	int32 status = 1;
+	FuseFileInfo fileInfo = 2;
+}
+
+message FlushRequestObject {
+	string path = 1;
+	FuseFileInfo fileInfo = 2;
+}
+
+message FlushResponseObject {
 	int32 status = 1;
 	FuseFileInfo fileInfo = 2;
 }
@@ -130,10 +143,11 @@ message OpenResponseObject {
 
 message WriteRequestObject {
 	int32 size  = 1;
-	int32 offset = 5;
-	bytes data = 2;
-	string path = 3;
-	FuseFileInfo fileInfo = 4;
+	int32 offset = 2;
+	bytes data = 3;
+	string path = 4;
+	bool flag = 5;
+	FuseFileInfo fileInfo = 6;
 }
 
 message WriteResponseObject {

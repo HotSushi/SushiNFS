@@ -98,6 +98,12 @@ static int do_write(const char *path, const char *buf, size_t size, off_t offset
 	return grpcClient.write(pathstr, buf, size, offset, fi);
 }
 
+static int do_flush(const char *path, struct fuse_file_info *fi)
+{
+	std::string pathstr(path);
+	return grpcClient.flush(pathstr, fi);
+}
+
 static int do_utimens(const char *path, const struct timespec ts[2], struct fuse_file_info *fi)
 {
 	std::string pathstr(path);
@@ -121,6 +127,7 @@ void setFuseOperations(struct fuse_operations &fo){
 	fo.fsync = &do_fsync;
 	fo.unlink = &do_unlink;
 	fo.write = &do_write;
+	fo.flush = &do_flush;
 	// sfo.utimens = &do_utimens;
 }
 
