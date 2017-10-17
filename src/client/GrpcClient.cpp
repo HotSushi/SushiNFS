@@ -88,6 +88,7 @@ int GrpcClient::read(std::string path, char* buffer, int offset, int size, struc
 	if(status.ok()){
 		// bcopy(readResponseObject.data().c_str(), buffer, readResponseObject.data().length());
 		strcpy(buffer, readResponseObject.data().c_str());
+		bcopy(readResponseObject.data().c_str(), buffer, readResponseObject.data().length());
 		return readResponseObject.data().length();
 	}
 	else {
@@ -411,6 +412,7 @@ int GrpcClient::flush(std::string path, struct fuse_file_info *fi){
 
 	if(status.ok()){
 		return flushResponseObject.status();
+		
 	}
 	else {
 		std::cout << status.error_code() << ": " << status.error_message()
