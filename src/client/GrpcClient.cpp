@@ -27,10 +27,11 @@ int GrpcClient::getAttributes(std::string path, struct stat *st){
 	}
 }
 
-std::list<DirEntry> GrpcClient::readDirectory(std::string path, int &responseCode){
+std::list<DirEntry> GrpcClient::readDirectory(std::string path, int &responseCode,  struct fuse_file_info* result){
 	// Container request
 	ReadDirectoryRequestObject readDirectoryRequestObject;
 	readDirectoryRequestObject.set_path(path);
+	*readDirectoryRequestObject.mutable_fileinfo() = toGFileInfo(result);
 	ClientContext context;
 
 	// Container response
@@ -38,6 +39,7 @@ std::list<DirEntry> GrpcClient::readDirectory(std::string path, int &responseCod
 
 	// Call
 	Status status = stub_->ReadDirectory(&context, readDirectoryRequestObject, &readDirectoryResponseObject);
+	toCFileInfo(readDirectoryResponseObject.fileinfo(), result);
 	std::list<DirEntry> entries;
 	if(status.ok()){
 		responseCode = readDirectoryResponseObject.status();
@@ -370,3 +372,29 @@ int GrpcClient::utimens(std::string path,const struct timespec *ts, struct fuse_
 	}
 }
 	
+int GrpcClient::lookup(struct fuse_file_info* base, std::string component, struct fuse_file_info* result)
+{
+	LookUpRequestObject lookUpRequestObject;
+	*lookUpRequestObject.mutable_fileinfo() = toGFileInfo(base);
+	lookUpRequestObject.set_component(component);
+
+	ClientContext context;
+
+	// Container response
+	LookUpResponseObject lookUpResponseObject;
+
+	// Call
+	Status status = stub_->LookUp(&context, lookUpRequestObject, &lookUpResponseObject);
+
+	toCFileInfo(lookUpResponseObject.fileinfo(), result);
+	if(status.ok()){
+		return lookUpResponseObject.status();
+	}
+	else {
+		std::cout << status.error_code() << ": " << status.error_message()
+              << std::endl;
+    return -1;
+	}
+}
+
+

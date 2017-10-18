@@ -66,4 +66,11 @@ class GrpcServiceImpl  final : public Grpc::Service {
   	Status Utimens(ServerContext* context, const UtimensRequestObject* request, 
               	UtimensResponseObject* response);
 
+    Status LookUp(ServerContext* context, const LookUpRequestObject* request, 
+                LookUpResponseObject* response);
+
+    void setMountLocation(std::string);
+private:
+	std::string mountLocation;
+
 };

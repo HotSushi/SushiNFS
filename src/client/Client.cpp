@@ -5,6 +5,22 @@
 
 static GrpcClient grpcClient  = grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials());
 
+static int do_lookup(const char *path, struct fuse_file_info *result)
+{
+	std::string pathstr(path);
+	struct fuse_file_info base;
+	base.fh = 0;
+	while(!pathstr.empty()){
+		int index = pathstr.find('/', 1);
+		std::string component = pathstr.substr(1,index);
+		if(grpcClient.lookup(&base, component, &base) < 0) return -1;
+		if(index == std::string::npos) break;
+		pathstr = pathstr.substr(index, std::string::npos);
+	}
+	result->fh = base.fh;
+	return 0;
+}
+
 static int do_getattr( const char *path, struct stat *st, struct fuse_file_info *fi )
 {
 	std::string pathstr(path);
@@ -13,9 +29,11 @@ static int do_getattr( const char *path, struct stat *st, struct fuse_file_info 
 
 static int do_readdir( const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi, fuse_readdir_flags flags)
 {
-	int responseCode;
 	std::string pathstr(path);
-	std::list<DirEntry> dirEntries = grpcClient.readDirectory(pathstr, responseCode);
+	struct fuse_file_info fi2;
+	do_lookup(path, &fi2);
+	int responseCode;
+	std::list<DirEntry> dirEntries = grpcClient.readDirectory(pathstr, responseCode, &fi2);
 	for (auto const& dirEntry : dirEntries) {
     	filler(buffer, dirEntry.name.c_str(), &dirEntry.st, 0, FUSE_FILL_DIR_PLUS);
 	}

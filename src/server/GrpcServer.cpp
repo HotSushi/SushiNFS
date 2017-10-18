@@ -1,6 +1,5 @@
 
 #include <src/server/GrpcServer.h>
-
 // Logic and data behind the server's behavior.
 // class GrpcServiceImpl final : public Grpc::Service {
 
@@ -39,16 +38,13 @@
   Status GrpcServiceImpl::ReadDirectory(ServerContext* context, const ReadDirectoryRequestObject* request, 
                 ReadDirectoryResponseObject* response) {
 
-
-
-
     DIR *dp;
     struct dirent *de;
 
-    char *path =new char[request->path().length()+1];
-    strcpy(path, request->path().c_str());
-    
-    dp = opendir(path);
+    //char *path =new char[request->path().length()+1];
+    //strcpy(path, request->path().c_str());
+
+    dp = fdopendir(request->fileinfo().fh());
     if (dp == NULL) {
       response->set_status(-errno);
     } else {
@@ -63,7 +59,7 @@
         rd->set_name(de->d_name);
         *rd->mutable_st() = toGstat(&st);
       }
-
+      *response->mutable_fileinfo() = request->fileinfo();
       response->set_status(0);
     }
 
@@ -359,5 +355,32 @@
       
       return Status::OK;
   }
-// };
+
+  Status GrpcServiceImpl::LookUp(ServerContext* context, const LookUpRequestObject* request, 
+                LookUpResponseObject* response){
+    struct fuse_file_info base;
+    struct fuse_file_info result;
+    toCFileInfo(request->fileinfo(), &base);
+    if(base.fh == 0) {
+      base.fh =  open(DEFAULT_DIR, 0);
+    }
+    if(request->component().empty()){
+      result.fh = base.fh;
+    }
+    else {
+      result.fh = openat(base.fh, request->component().c_str(), base.flags);
+      result.flags = base.flags;
+      close(base.fh);
+    }
+    if(result.fh < 0) 
+      response->set_status(-1);
+    else
+      response->set_status(0);
+    *response->mutable_fileinfo() = toGFileInfo(&result);
+    return Status::OK;
+  }
+
+  void GrpcServiceImpl::setMountLocation(std::string mount){
+  	GrpcServiceImpl::mountLocation = mount;
+  }
 

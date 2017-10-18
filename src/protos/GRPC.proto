@@ -3,6 +3,9 @@ syntax = "proto3";
 // The greeting service definition.
 service Grpc {
 
+  // LookUp
+  rpc LookUp (LookUpRequestObject) returns (LookUpResponseObject) {}
+
 	// Get attributes
   rpc GetAttributes (GetAttributesRequestObject) returns (GetAttributesResponseObject) {}
 
@@ -67,7 +70,17 @@ message Stat {
 }
 
 message FuseFileInfo {
-	uint64 fh = 1;
+	int32 fh = 1;
+}
+
+message LookUpRequestObject {
+	FuseFileInfo fileInfo = 1;
+	string component = 2;
+}
+
+message LookUpResponseObject {
+	FuseFileInfo fileInfo = 1;
+	int32 status = 2;
 }
 
 message TimeSpec {
@@ -222,6 +235,7 @@ message ReadDirectoryRequestObject {
 message ReadDirectoryResponseObject {
 	repeated ReadDirectorySingleObject objects = 1;
 	int32 status = 2;
+	FuseFileInfo fileInfo = 3;
 }
 
 message ReadRequestObject {

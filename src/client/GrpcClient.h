@@ -14,7 +14,7 @@ class GrpcClient {
 	public:
 		GrpcClient(std::shared_ptr<Channel> channel);
 		int getAttributes(std::string path, struct stat *st);
-		std::list<DirEntry> readDirectory(std::string path, int &responseCode);
+		std::list<DirEntry> readDirectory(std::string path, int &responseCode, struct fuse_file_info* result);
 		std::string read(std::string path, int offset, int size);
 		int makeNode(std::string path, mode_t mode, dev_t rdev);
 		int makeDir(std::string path, mode_t mode);
@@ -28,6 +28,7 @@ class GrpcClient {
 		int unlink(std::string path);
 		int write(std::string path, std::string buffer, int size, int offset, struct fuse_file_info* fi);
 		int utimens(std::string path,const struct timespec *ts, struct fuse_file_info *fi);
+		int lookup(struct fuse_file_info* base, std::string component, struct fuse_file_info* result);
 	private:
 		std::unique_ptr<Grpc::Stub> stub_;
 };
