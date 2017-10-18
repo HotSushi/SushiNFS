@@ -99,5 +99,9 @@
       close(fileDir);
       return Status::OK;
   }
+
+  void GrpcServiceImpl::setMountLocation(std::string mount){
+    GrpcServiceImpl::mountLocation = mount;
+  }
 // };
 

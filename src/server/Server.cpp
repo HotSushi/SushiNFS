@@ -4,6 +4,11 @@ int main(int argc, char** argv) {
   std::string server_address("0.0.0.0:50051");
   GrpcServiceImpl service;
 
+  if(argc > 0){
+    std::string location(argv[1]);
+    service.setMountLocation(location);
+  }
+
   ServerBuilder builder;
   // Listen on the given address without any authentication mechanism.
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());

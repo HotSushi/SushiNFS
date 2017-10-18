@@ -30,4 +30,8 @@ class GrpcServiceImpl  final : public Grpc::Service {
 	Status Read(ServerContext* context, const ReadRequestObject* request, 
                 ReadResponseObject* response);
 
+	std::string mountLocation;
+
+public:
+	void setMountLocation(std::string mount);
 };
