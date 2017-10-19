@@ -14,8 +14,9 @@
     toCstat(request->st(), &st);
     if(LOG) std::cout <<"------------------------------------------------\n";
     if(LOG) std::cout << "GetAttributes : path passed - " << request->path() << "\n";
-    char *path =new char[request->path().length()+1];
-    strcpy(path, request->path().c_str());
+    std::string adjustedPath = mountpoint + request->path();
+    char *path =new char[adjustedPath.length()+1];
+    strcpy(path, adjustedPath.c_str());
     int res = lstat(path, &st);
     if (res == -1) {
       if(LOG) std::cout << "GetAttributes : Error getting stat -  " << errno << " Error message - " << std::strerror(errno) <<"\n";
@@ -51,9 +52,10 @@
     struct dirent *de;
     if(LOG) std::cout <<"------------------------------------------------\n";
     if(LOG) std::cout << "ReadDirectory : path passed - " << request->path() << "\n";
-    char *path =new char[request->path().length()+1];
-    strcpy(path, request->path().c_str());
-    
+    std::string adjustedPath = mountpoint + request->path();
+    char *path =new char[adjustedPath.length()+1];
+    strcpy(path, adjustedPath.c_str());
+
     dp = opendir(path);
     if (dp == NULL) {
       if(LOG) std::cout << "ReadDirectory : Error getting directory path -  " << errno << "\n";
@@ -89,9 +91,10 @@
 
       int fileDir;
       int res;
-      char* buffer = new char[request->size()];
-      char *path =new char[request->path().length()+1];
-      strcpy(path, request->path().c_str());
+      char* buffer = new char[request->size()];  
+    std::string adjustedPath = mountpoint + request->path();
+    char *path =new char[adjustedPath.length()+1];
+    strcpy(path, adjustedPath.c_str());
       struct fuse_file_info fi;
       toCFileInfo(request->fileinfo(), &fi);
     
@@ -131,9 +134,11 @@
       if(LOG) std::cout << "Write : path passed - " << request->path() <<"\n";
       int fileDir;
       //char *buffer = new char[request->data().length() + 1];
-      char *path =new char[request->path().length()+1];
+      std::string adjustedPath = mountpoint + request->path();
+      char *path =new char[adjustedPath.length()+1];
+      strcpy(path, adjustedPath.c_str());
+    
       std::string buffer = request->data();
-      strcpy(path, request->path().c_str());
       struct fuse_file_info fi;
       toCFileInfo(request->fileinfo(), &fi);
       if(LOG) std::cout << "Write: got all the inputs sorted. File header - "<< fi.fh << "\n";
@@ -180,8 +185,9 @@
         if(LOG) std::cout <<"------------------------------------------------\n";
 
         if(LOG) std::cout << "Create : path passed - " << request->path() <<"\n";
-        char *path =new char[request->path().length()+1];
-        strcpy(path, request->path().c_str());
+        std::string adjustedPath = mountpoint + request->path();
+        char *path =new char[adjustedPath.length()+1];
+        strcpy(path, adjustedPath.c_str());
         mode_t mode = request->mode();
         if(LOG) std::cout << "Create : mode passed - " << mode << "\n";
         struct fuse_file_info fi;
@@ -209,8 +215,9 @@
 
       if(LOG) std::cout <<"------------------------------------------------\n";
       if(LOG) std::cout << "Open : path passed - " << request->path();
-      char *path = new char[request->path().length()+1];
-      strcpy(path, request->path().c_str());
+      std::string adjustedPath = mountpoint + request->path();
+      char *path =new char[adjustedPath.length()+1];
+      strcpy(path, adjustedPath.c_str());
       struct fuse_file_info fi;
       toCFileInfo(request->fileinfo(), &fi);
 
@@ -234,9 +241,10 @@
                 MknodResponseObject* response) {
       int res;
 
-      char *path =new char[request->path().length()+1];
-      strcpy(path, request->path().c_str());
-
+      std::string adjustedPath = mountpoint + request->path();
+      char *path =new char[adjustedPath.length()+1];
+      strcpy(path, adjustedPath.c_str());
+      
       mode_t mode = request->mode();
       dev_t rdev = request->rdev();
       /* On Linux this could just be 'mknod(path, mode, rdev)' but this
@@ -269,9 +277,10 @@
   Status GrpcServiceImpl::MkDir(ServerContext* context, const MkDirRequestObject* request, 
                 MkDirResponseObject* response) {
 
-      char *path =new char[request->path().length()+1];
-      strcpy(path, request->path().c_str());
-
+      std::string adjustedPath = mountpoint + request->path();
+      char *path =new char[adjustedPath.length()+1];
+      strcpy(path, adjustedPath.c_str());
+    
       mode_t mode = request->mode();
       int res = mkdir(path, mode);
 
@@ -286,9 +295,10 @@
   Status GrpcServiceImpl::RmDir(ServerContext* context, const RmDirRequestObject* request, 
                 RmDirResponseObject* response) {
     
-      char *path =new char[request->path().length()+1];
-      strcpy(path, request->path().c_str());
-
+      std::string adjustedPath = mountpoint + request->path();
+      char *path =new char[adjustedPath.length()+1];
+      strcpy(path, adjustedPath.c_str());
+    
       int res = rmdir(path);
 
       if (res == -1) {
@@ -305,11 +315,13 @@
       // if (flags)
       //   return -EINVAL
 
-      char *to_path =new char[request->to().length()+1];
-      strcpy(to_path, request->to().c_str());
+      std::string adjustedToPath = mountpoint + request->to();    
+      char *to_path =new char[adjustedToPath.length()+1];
+      strcpy(to_path, adjustedToPath.c_str());
 
-      char *from_path =new char[request->from().length()+1];
-      strcpy(from_path, request->from().c_str());
+      std::string adjustedFromPath = mountpoint + request->from();    
+      char *from_path =new char[adjustedFromPath.length()+1];
+      strcpy(from_path, adjustedFromPath.c_str());
 
       int res = rename(from_path, to_path);
       if (res == -1) {
@@ -327,8 +339,9 @@
         if(LOG) std::cout <<"------------------------------------------------\n";
         if(LOG) std::cout << "Truncate : path passed - " << request->path() << "\n";
         int res;
-        char *path =new char[request->path().length()+1];
-        strcpy(path, request->path().c_str());
+        std::string adjustedPath = mountpoint + request->path();
+        char *path =new char[adjustedPath.length()+1];
+        strcpy(path, adjustedPath.c_str());
         struct fuse_file_info fi;
         toCFileInfo(request->fileinfo(), &fi);
         if(LOG) std::cout << "Truncate : FH received - " << fi.fh << "\n";
@@ -354,8 +367,9 @@
 
       if(LOG) std::cout <<"------------------------------------------------\n";
       if(LOG) std::cout << "Release : path passed - " << request->path() << "\n";
-      char *path =new char[request->path().length()+1];
-      strcpy(path, request->path().c_str());
+      std::string adjustedPath = mountpoint + request->path();
+      char *path =new char[adjustedPath.length()+1];
+      strcpy(path, adjustedPath.c_str());
       struct fuse_file_info fi;
       toCFileInfo(request->fileinfo(), &fi);
       if(LOG) std::cout << "Release : FH received - " << fi.fh << "\n";
@@ -374,8 +388,9 @@
 
       if(LOG) std::cout <<"------------------------------------------------\n";
       if(LOG) std::cout << "Fsync : path passed - " << request->path() << "\n";
-      char *path =new char[request->path().length()+1];
-      strcpy(path, request->path().c_str());
+      std::string adjustedPath = mountpoint + request->path();
+      char *path =new char[adjustedPath.length()+1];
+      strcpy(path, adjustedPath.c_str());
       int isdatasync = request->isdatasync();
       struct fuse_file_info fi;
       toCFileInfo(request->fileinfo(), &fi);
@@ -394,9 +409,10 @@
       
       if(LOG) std::cout <<"------------------------------------------------\n";
       if(LOG) std::cout << "Unlink : path passed - " << request->path() << "\n";
-      char *path =new char[request->path().length()+1];
-      strcpy(path, request->path().c_str());
-
+      std::string adjustedPath = mountpoint + request->path();
+      char *path =new char[adjustedPath.length()+1];
+      strcpy(path, adjustedPath.c_str());
+    
       int res = unlink(path);
 
       if (res == -1) {
@@ -412,8 +428,9 @@
 
       if(LOG) std::cout <<"------------------------------------------------\n";
       if(LOG) std::cout << "Flush : path passed - " << request->path() << "\n";
-      char *path =new char[request->path().length()+1];
-      strcpy(path, request->path().c_str());
+      std::string adjustedPath = mountpoint + request->path();
+      char *path =new char[adjustedPath.length()+1];
+      strcpy(path, adjustedPath.c_str());
       struct fuse_file_info fi;
       toCFileInfo(request->fileinfo(), &fi);
       if(LOG) std::cout << "Flush : FH received - " << fi.fh << "\n";
@@ -433,8 +450,9 @@
   Status GrpcServiceImpl::Utimens(ServerContext* context, const UtimensRequestObject* request, 
               UtimensResponseObject* response) {
 
-      char *path =new char[request->path().length()+1];
-      strcpy(path, request->path().c_str());
+      std::string adjustedPath = mountpoint + request->path();
+      char *path =new char[adjustedPath.length()+1];
+      strcpy(path, adjustedPath.c_str());
       // struct fuse_file_info fi;
       // toCFileInfo(request->fileinfo(), &fi);
 
@@ -452,6 +470,10 @@
       // *response->mutable_fileinfo() = toGFileInfo(&fi);
       
       return Status::OK;
+  }
+
+  void GrpcServiceImpl::setMountPoint(std::string mountpoint) {
+    GrpcServiceImpl::mountpoint = mountpoint;
   }
 // };
 

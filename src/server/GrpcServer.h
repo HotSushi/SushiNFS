@@ -69,4 +69,10 @@ class GrpcServiceImpl  final : public Grpc::Service {
   	Status Utimens(ServerContext* context, const UtimensRequestObject* request, 
               	UtimensResponseObject* response);
 
+    std::string mountpoint;
+
+public:
+
+    void setMountPoint(std::string mountpoint);
+
 };

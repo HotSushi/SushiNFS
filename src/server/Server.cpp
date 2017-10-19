@@ -3,7 +3,7 @@
 int main(int argc, char** argv) {
   std::string server_address("0.0.0.0:50051");
   GrpcServiceImpl service;
-
+  service.setMountPoint("/home/ubuntu");
   ServerBuilder builder;
   // Listen on the given address without any authentication mechanism.
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
