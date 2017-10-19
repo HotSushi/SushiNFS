@@ -250,4 +250,5 @@ message ReadResponseObject {
 	bytes data = 1;
 	int32 status = 2;
 	FuseFileInfo fileInfo = 3;
+	int32 size = 4;
 }

@@ -5,6 +5,14 @@
 
 static GrpcClient grpcClient  = grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials());
 
+// static void *xmp_init(struct fuse_conn_info *conn,
+// 		      struct fuse_config *cfg)
+// {
+// 	(void) conn;
+// 	cfg->direct_io = 1;
+// 	return NULL;
+// }
+
 static int do_getattr( const char *path, struct stat *st, struct fuse_file_info *fi )
 {
 	std::string pathstr(path);
@@ -113,6 +121,7 @@ static int do_utimens(const char *path, const struct timespec ts[2], struct fuse
 static struct fuse_operations operations;
 
 void setFuseOperations(struct fuse_operations &fo){
+	// fo.init = &xmp_init;
 	fo.getattr = &do_getattr;
 	fo.readdir = &do_readdir;
 	fo.read = &do_read; 
