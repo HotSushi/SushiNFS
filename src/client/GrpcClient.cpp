@@ -87,9 +87,8 @@ int GrpcClient::read(std::string path, char* buffer, int offset, int size, struc
 
 	if(status.ok()){
 		// bcopy(readResponseObject.data().c_str(), buffer, readResponseObject.data().length());
-		strcpy(buffer, readResponseObject.data().c_str());
-		bcopy(readResponseObject.data().c_str(), buffer, readResponseObject.data().length());
-		return readResponseObject.data().length();
+		strncpy(buffer, readResponseObject.data().c_str(), size);
+		return readResponseObject.size();
 	}
 	else {
 		std::cout << status.error_code() << ": " << status.error_message()

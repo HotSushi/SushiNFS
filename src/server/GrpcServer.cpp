@@ -115,6 +115,7 @@
         }
       }
       response->set_data(buffer);
+      response->set_size(res);
       *response->mutable_fileinfo() = toGFileInfo(&fi);
       delete[] buffer;
       std::cout <<"------------------------------------------------\n\n";
