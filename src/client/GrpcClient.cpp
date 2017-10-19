@@ -1,4 +1,5 @@
 #include <src/client/GrpcClient.h>
+#define LOG false
 
 GrpcClient::GrpcClient(std::shared_ptr<Channel> channel)
       : stub_(Grpc::NewStub(channel)) {}
@@ -9,8 +10,8 @@ static int bufferLimit = 65536;
 
 int GrpcClient::getAttributes(std::string path, struct stat *st){
 
-	std::cout <<"------------------------------------------------\n";
-    std::cout << "getAttributes : path passed - " << path << "\n";
+	if(LOG) std::cout <<"------------------------------------------------\n";
+    if(LOG) std::cout << "getAttributes : path passed - " << path << "\n";
 	// Container request
 	GetAttributesRequestObject getAttributesRequestObject;
 	getAttributesRequestObject.set_path(path);
@@ -19,22 +20,22 @@ int GrpcClient::getAttributes(std::string path, struct stat *st){
 
 	// Container response
 	GetAttributesResponseObject getAttributesResponseObject;
-	std::cout << "getAttributes : Calling server \n";
+	if(LOG) std::cout << "getAttributes : Calling server \n";
 	// Actual call
 	Status status = stub_->GetAttributes(&context, getAttributesRequestObject, &getAttributesResponseObject);
-	std::cout << "getAttributes : Response from server \n";
+	if(LOG) std::cout << "getAttributes : Response from server \n";
 	if(status.ok()){
-		std::cout << "getAttributes : converting response \n";
+		if(LOG) std::cout << "getAttributes : converting response \n";
 		toCstat(getAttributesResponseObject.st(), st);
-		std::cout << "getAttributes : returning resposne \n";
+		if(LOG) std::cout << "getAttributes : returning resposne \n";
 		return getAttributesResponseObject.status();
 	}
 	else {
-		std::cout << "getAttributes : Failed \n";
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << "getAttributes : Failed \n";
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
 
-    std::cout <<"------------------------------------------------\n\n";
+    if(LOG) std::cout <<"------------------------------------------------\n\n";
     return -1;
 	}
 }
@@ -62,7 +63,7 @@ std::list<DirEntry> GrpcClient::readDirectory(std::string path, int &responseCod
 		return entries;
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return entries;
 	}
@@ -91,7 +92,7 @@ int GrpcClient::read(std::string path, char* buffer, int offset, int size, struc
 		return readResponseObject.size();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
         return -1;
 	}
@@ -115,7 +116,7 @@ int GrpcClient::makeNode(std::string path, mode_t mode, dev_t rdev){
 		return mknodResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -138,7 +139,7 @@ int GrpcClient::makeDir(std::string path, mode_t mode){
 		return mkDirResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -159,7 +160,7 @@ int GrpcClient::rmDir(std::string path){
 		return rmDirResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -181,7 +182,7 @@ int GrpcClient::rename(std::string from, std::string to){
 		return renameResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -206,7 +207,7 @@ int GrpcClient::truncate(std::string path, off_t size, struct fuse_file_info *fi
 		return truncateResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -224,14 +225,14 @@ int GrpcClient::create(std::string path, mode_t mode, struct fuse_file_info *fi)
 
 	// Call
 	Status status = stub_->Create(&context, createRequestObject, &createResponseObject);
-	std::cout <<" Success creating file \n";
+	if(LOG) std::cout <<" Success creating file \n";
 	toCFileInfo(createResponseObject.fileinfo(), fi);
-	std::cout <<" Success storing response object \n";
+	if(LOG) std::cout <<" Success storing response object \n";
 	if(status.ok()){
 		return createResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -255,7 +256,7 @@ int GrpcClient::open(std::string path, struct fuse_file_info *fi){
 		return openResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -280,7 +281,7 @@ int GrpcClient::release(std::string path, struct fuse_file_info *fi){
 		return releaseResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -305,7 +306,7 @@ int GrpcClient::fsync(std::string path, int isdatasync, struct fuse_file_info* f
 		return fsyncResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -326,7 +327,7 @@ int GrpcClient::unlink(std::string path){
 		return unlinkResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -336,9 +337,9 @@ int GrpcClient::write(std::string path, const char *buf, int size, int offset, s
 {
 
 	WriteRequestObject writeRequestObject;
-	std::cout <<"------------------------------------------------\n";
-    std::cout << "write : path passed - " << path << "\n";
-    std::cout << "write : data size is - " << strlen(buf) << "\n";
+	if(LOG) std::cout <<"------------------------------------------------\n";
+    if(LOG) std::cout << "write : path passed - " << path << "\n";
+    if(LOG) std::cout << "write : data size is - " << strlen(buf) << "\n";
 	
 	bool commitFlag = false;
       if (fi->fh != 0) {
@@ -388,11 +389,11 @@ int GrpcClient::write(std::string path, const char *buf, int size, int offset, s
 		return writeResponseObject.datasize();
 	} else {
 
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
-	std::cout <<"------------------------------------------------\n\n";
+	if(LOG) std::cout <<"------------------------------------------------\n\n";
 }
 
 int GrpcClient::flush(std::string path, struct fuse_file_info *fi){
@@ -414,7 +415,7 @@ int GrpcClient::flush(std::string path, struct fuse_file_info *fi){
 		
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -441,7 +442,7 @@ int GrpcClient::utimens(std::string path,const struct timespec *ts, struct fuse_
 		return utimensResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}

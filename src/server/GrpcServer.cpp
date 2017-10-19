@@ -1,5 +1,6 @@
 
 #include <src/server/GrpcServer.h>
+#define LOG false
 
 // Logic and data behind the server's behavior.
 // class GrpcServiceImpl final : public Grpc::Service {
@@ -11,16 +12,16 @@
     struct stat st;
 
     toCstat(request->st(), &st);
-    std::cout <<"------------------------------------------------\n";
-    std::cout << "GetAttributes : path passed - " << request->path() << "\n";
+    if(LOG) std::cout <<"------------------------------------------------\n";
+    if(LOG) std::cout << "GetAttributes : path passed - " << request->path() << "\n";
     char *path =new char[request->path().length()+1];
     strcpy(path, request->path().c_str());
     int res = lstat(path, &st);
     if (res == -1) {
-      std::cout << "GetAttributes : Error getting stat -  " << errno << " Error message - " << std::strerror(errno) <<"\n";
+      if(LOG) std::cout << "GetAttributes : Error getting stat -  " << errno << " Error message - " << std::strerror(errno) <<"\n";
       response->set_status(-errno);
     } else {
-      // std::cout << "GetAttributes : Success getting stat \n";
+      // if(LOG) std::cout << "GetAttributes : Success getting stat \n";
       // char* temp = new char[sizeof(st)];
       // memcpy(temp, &st, sizeof(st));
 
@@ -34,7 +35,7 @@
     }
       
     
-    std::cout <<"------------------------------------------------\n\n";
+    if(LOG) std::cout <<"------------------------------------------------\n\n";
 
     return Status::OK;
 
@@ -48,14 +49,14 @@
 
     DIR *dp;
     struct dirent *de;
-    std::cout <<"------------------------------------------------\n";
-    std::cout << "ReadDirectory : path passed - " << request->path() << "\n";
+    if(LOG) std::cout <<"------------------------------------------------\n";
+    if(LOG) std::cout << "ReadDirectory : path passed - " << request->path() << "\n";
     char *path =new char[request->path().length()+1];
     strcpy(path, request->path().c_str());
     
     dp = opendir(path);
     if (dp == NULL) {
-      std::cout << "ReadDirectory : Error getting directory path -  " << errno << "\n";
+      if(LOG) std::cout << "ReadDirectory : Error getting directory path -  " << errno << "\n";
       response->set_status(-errno);
     } else {
       while ((de = readdir(dp)) != NULL) {
@@ -72,7 +73,7 @@
       response->set_status(0);
     }
 
-    std::cout <<"------------------------------------------------\n\n";
+    if(LOG) std::cout <<"------------------------------------------------\n\n";
 
     closedir(dp);
     return Status::OK;
@@ -82,9 +83,9 @@
   Status GrpcServiceImpl::Read(ServerContext* context, const ReadRequestObject* request, 
                 ReadResponseObject* response) {
 
-      std::cout <<"------------------------------------------------\n";
+      if(LOG) std::cout <<"------------------------------------------------\n";
 
-      std::cout << "Read : path passed - " << request->path() <<"\n";
+      if(LOG) std::cout << "Read : path passed - " << request->path() <<"\n";
 
       int fileDir;
       int res;
@@ -95,22 +96,22 @@
       toCFileInfo(request->fileinfo(), &fi);
     
       fileDir = fi.fh;
-      std::cout << "Read: File directory using FH - " << fileDir <<"\n";
+      if(LOG) std::cout << "Read: File directory using FH - " << fileDir <<"\n";
       if (fileDir == 0) {
         fileDir = open(path, O_RDONLY);
         fi.fh = fileDir;
-        std::cout << "Read: File directory using open - " << fileDir <<"\n";
+        if(LOG) std::cout << "Read: File directory using open - " << fileDir <<"\n";
       }
 
-      std::cout << "Read: got the file directory - " << fileDir <<"\n";
+      if(LOG) std::cout << "Read: got the file directory - " << fileDir <<"\n";
 
       if (fileDir == -1) {
-        std::cout << "Read: Error occured with file directory - " << errno <<"\n";
+        if(LOG) std::cout << "Read: Error occured with file directory - " << errno <<"\n";
         response->set_status(-errno);
       } else {
         res = pread(fileDir, buffer, request->size(), request->offset());
         if (res == -1) {
-          std::cout << "Read: Error occured with writing to file- " << errno << " Error message - " << std::strerror(errno) <<"\n";
+          if(LOG) std::cout << "Read: Error occured with writing to file- " << errno << " Error message - " << std::strerror(errno) <<"\n";
           response->set_status(-errno);
         }
       }
@@ -118,7 +119,7 @@
       response->set_size(res);
       *response->mutable_fileinfo() = toGFileInfo(&fi);
       delete[] buffer;
-      std::cout <<"------------------------------------------------\n\n";
+      if(LOG) std::cout <<"------------------------------------------------\n\n";
       // close(fileDir);
       return Status::OK;
   }
@@ -126,8 +127,8 @@
   Status GrpcServiceImpl::Write(ServerContext* context, const WriteRequestObject* request, 
               WriteResponseObject* response) {
 
-      std::cout <<"------------------------------------------------\n";
-      std::cout << "Write : path passed - " << request->path() <<"\n";
+      if(LOG) std::cout <<"------------------------------------------------\n";
+      if(LOG) std::cout << "Write : path passed - " << request->path() <<"\n";
       int fileDir;
       //char *buffer = new char[request->data().length() + 1];
       char *path =new char[request->path().length()+1];
@@ -135,7 +136,7 @@
       strcpy(path, request->path().c_str());
       struct fuse_file_info fi;
       toCFileInfo(request->fileinfo(), &fi);
-      std::cout << "Write: got all the inputs sorted. File header - "<< fi.fh << "\n";
+      if(LOG) std::cout << "Write: got all the inputs sorted. File header - "<< fi.fh << "\n";
 
 
 
@@ -146,17 +147,17 @@
         fileDir = fi.fh;
       }
 
-      std::cout << "Write: got the file directory - " << fileDir <<"\n";
+      if(LOG) std::cout << "Write: got the file directory - " << fileDir <<"\n";
       int res;
       
       if (fileDir == -1) {
-        std::cout << "Write: Error occured with file directory - " << errno <<"\n";
+        if(LOG) std::cout << "Write: Error occured with file directory - " << errno <<"\n";
         response->set_status(-errno);
       } else {
         res = pwrite(fileDir, &buffer[0], request->size(), request->offset());
         
         if (res == -1) {
-          std::cout << "Write: Error occured with writing to file- " << errno << " Error message - " << std::strerror(errno) <<"\n";
+          if(LOG) std::cout << "Write: Error occured with writing to file- " << errno << " Error message - " << std::strerror(errno) <<"\n";
           response->set_status(-errno);
         }
 
@@ -165,7 +166,7 @@
           close(dup(fi.fh));
         }
       }
-      std::cout <<"------------------------------------------------\n\n";
+      if(LOG) std::cout <<"------------------------------------------------\n\n";
       
       //close(fileDir);
       response->set_status(0);
@@ -176,29 +177,29 @@
 
   Status GrpcServiceImpl::Create(ServerContext* context, const CreateRequestObject* request, 
                 CreateResponseObject* response) {
-        std::cout <<"------------------------------------------------\n";
+        if(LOG) std::cout <<"------------------------------------------------\n";
 
-        std::cout << "Create : path passed - " << request->path() <<"\n";
+        if(LOG) std::cout << "Create : path passed - " << request->path() <<"\n";
         char *path =new char[request->path().length()+1];
         strcpy(path, request->path().c_str());
         mode_t mode = request->mode();
-        std::cout << "Create : mode passed - " << mode << "\n";
+        if(LOG) std::cout << "Create : mode passed - " << mode << "\n";
         struct fuse_file_info fi;
         toCFileInfo(request->fileinfo(), &fi);
-        std::cout << "Create : file flags passed - " << fi.flags <<"\n";
+        if(LOG) std::cout << "Create : file flags passed - " << fi.flags <<"\n";
         
         //fi->flags as 0
         int res = open(path, fi.flags, mode);
         if (res == -1) {
-          std::cout << "Create : Error file not opened. -  " << errno <<"\n";
+          if(LOG) std::cout << "Create : Error file not opened. -  " << errno <<"\n";
           response->set_status(-errno);
         } else {
           fi.fh = res;
-          std::cout << "Create : Success file created - " << fi.fh <<"\n";
+          if(LOG) std::cout << "Create : Success file created - " << fi.fh <<"\n";
           response->set_status(0);
           *response->mutable_fileinfo() = toGFileInfo(&fi);
         }
-        std::cout <<"------------------------------------------------\n\n";
+        if(LOG) std::cout <<"------------------------------------------------\n\n";
 
         return Status::OK;
   }
@@ -206,14 +207,14 @@
   Status GrpcServiceImpl::Open(ServerContext* context, const OpenRequestObject* request, 
               OpenResponseObject* response) {
 
-      std::cout <<"------------------------------------------------\n";
-      std::cout << "Open : path passed - " << request->path();
+      if(LOG) std::cout <<"------------------------------------------------\n";
+      if(LOG) std::cout << "Open : path passed - " << request->path();
       char *path = new char[request->path().length()+1];
       strcpy(path, request->path().c_str());
       struct fuse_file_info fi;
       toCFileInfo(request->fileinfo(), &fi);
 
-      std::cout << "Open : file flags passed - " << fi.flags <<"\n";
+      if(LOG) std::cout << "Open : file flags passed - " << fi.flags <<"\n";
       //fi->flags as 0
       int res = open(path, fi.flags);
       if (res == -1) {
@@ -221,8 +222,8 @@
       }
       fi.fh = res;
 
-      std::cout << "Open : file handler passed - " << fi.fh <<"\n";
-      std::cout <<"------------------------------------------------\n\n";
+      if(LOG) std::cout << "Open : file handler passed - " << fi.fh <<"\n";
+      if(LOG) std::cout <<"------------------------------------------------\n\n";
       response->set_status(0);
       *response->mutable_fileinfo() = toGFileInfo(&fi);
       
@@ -323,14 +324,14 @@
   Status GrpcServiceImpl::Truncate(ServerContext* context, const TruncateRequestObject* request, 
                 TruncateResponseObject* response) {
 
-        std::cout <<"------------------------------------------------\n";
-        std::cout << "Truncate : path passed - " << request->path() << "\n";
+        if(LOG) std::cout <<"------------------------------------------------\n";
+        if(LOG) std::cout << "Truncate : path passed - " << request->path() << "\n";
         int res;
         char *path =new char[request->path().length()+1];
         strcpy(path, request->path().c_str());
         struct fuse_file_info fi;
         toCFileInfo(request->fileinfo(), &fi);
-        std::cout << "Truncate : FH received - " << fi.fh << "\n";
+        if(LOG) std::cout << "Truncate : FH received - " << fi.fh << "\n";
 
         if (fi.fh != 0) {
           res = ftruncate(fi.fh, request->size());
@@ -339,10 +340,10 @@
         }
 
         if (res == -1) {
-          std::cout << "Truncate : Error file not opened. -  " << errno <<"\n";
+          if(LOG) std::cout << "Truncate : Error file not opened. -  " << errno <<"\n";
           response->set_status(-errno);
         }
-        std::cout <<"------------------------------------------------\n\n";
+        if(LOG) std::cout <<"------------------------------------------------\n\n";
         response->set_status(0);
         *response->mutable_fileinfo() = toGFileInfo(&fi);
         return Status::OK;
@@ -351,28 +352,28 @@
   Status GrpcServiceImpl::Release(ServerContext* context, const ReleaseRequestObject* request, 
             ReleaseResponseObject* response) {
 
-      std::cout <<"------------------------------------------------\n";
-      std::cout << "Release : path passed - " << request->path() << "\n";
+      if(LOG) std::cout <<"------------------------------------------------\n";
+      if(LOG) std::cout << "Release : path passed - " << request->path() << "\n";
       char *path =new char[request->path().length()+1];
       strcpy(path, request->path().c_str());
       struct fuse_file_info fi;
       toCFileInfo(request->fileinfo(), &fi);
-      std::cout << "Release : FH received - " << fi.fh << "\n";
+      if(LOG) std::cout << "Release : FH received - " << fi.fh << "\n";
 
       (void) path;
       close(fi.fh);
-      std::cout << "Release : FH closed, fh - " << fi.fh << "\n";
+      if(LOG) std::cout << "Release : FH closed, fh - " << fi.fh << "\n";
       response->set_status(0);
       *response->mutable_fileinfo() = toGFileInfo(&fi);
-      std::cout <<"------------------------------------------------\n\n";
+      if(LOG) std::cout <<"------------------------------------------------\n\n";
       return Status::OK;
   }
 
   Status GrpcServiceImpl::Fsync(ServerContext* context, const FsyncRequestObject* request, 
             FsyncResponseObject* response) {
 
-      std::cout <<"------------------------------------------------\n";
-      std::cout << "Fsync : path passed - " << request->path() << "\n";
+      if(LOG) std::cout <<"------------------------------------------------\n";
+      if(LOG) std::cout << "Fsync : path passed - " << request->path() << "\n";
       char *path =new char[request->path().length()+1];
       strcpy(path, request->path().c_str());
       int isdatasync = request->isdatasync();
@@ -384,15 +385,15 @@
       (void) fi;
       response->set_status(0);
       *response->mutable_fileinfo() = toGFileInfo(&fi);
-      std::cout <<"------------------------------------------------\n\n";
+      if(LOG) std::cout <<"------------------------------------------------\n\n";
       return Status::OK;
   }
 
   Status GrpcServiceImpl::Unlink(ServerContext* context, const UnlinkRequestObject* request, 
             UnlinkResponseObject* response) {
       
-      std::cout <<"------------------------------------------------\n";
-      std::cout << "Unlink : path passed - " << request->path() << "\n";
+      if(LOG) std::cout <<"------------------------------------------------\n";
+      if(LOG) std::cout << "Unlink : path passed - " << request->path() << "\n";
       char *path =new char[request->path().length()+1];
       strcpy(path, request->path().c_str());
 
@@ -401,7 +402,7 @@
       if (res == -1) {
         response->set_status(-errno);
       }
-      std::cout <<"------------------------------------------------\n\n";
+      if(LOG) std::cout <<"------------------------------------------------\n\n";
       response->set_status(0);
       return Status::OK;
   }
@@ -409,13 +410,13 @@
   Status GrpcServiceImpl::Flush(ServerContext* context, const FlushRequestObject* request, 
             FlushResponseObject* response) {
 
-      std::cout <<"------------------------------------------------\n";
-      std::cout << "Flush : path passed - " << request->path() << "\n";
+      if(LOG) std::cout <<"------------------------------------------------\n";
+      if(LOG) std::cout << "Flush : path passed - " << request->path() << "\n";
       char *path =new char[request->path().length()+1];
       strcpy(path, request->path().c_str());
       struct fuse_file_info fi;
       toCFileInfo(request->fileinfo(), &fi);
-      std::cout << "Flush : FH received - " << fi.fh << "\n";
+      if(LOG) std::cout << "Flush : FH received - " << fi.fh << "\n";
 
       (void) path;
       int res = close(dup(fi.fh));
@@ -423,9 +424,9 @@
       if (res == -1) {
         response->set_status(-errno);
       }
-      std::cout << "Flush : FH closed, fh - " << fi.fh << "\n";
+      if(LOG) std::cout << "Flush : FH closed, fh - " << fi.fh << "\n";
       *response->mutable_fileinfo() = toGFileInfo(&fi);
-      std::cout <<"------------------------------------------------\n\n";
+      if(LOG) std::cout <<"------------------------------------------------\n\n";
       return Status::OK;
   }
 
