@@ -5,6 +5,14 @@
 
 static GrpcClient grpcClient  = grpc::CreateChannel("localhost:50051", grpc::InsecureChannelCredentials());
 
+// static void *xmp_init(struct fuse_conn_info *conn,
+// 		      struct fuse_config *cfg)
+// {
+// 	(void) conn;
+// 	cfg->direct_io = 1;
+// 	return NULL;
+// }
+
 static int do_getattr( const char *path, struct stat *st, struct fuse_file_info *fi )
 {
 	std::string pathstr(path);
@@ -25,9 +33,9 @@ static int do_readdir( const char *path, void *buffer, fuse_fill_dir_t filler, o
 static int do_read( const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi )
 {
 	std::string pathstr(path);
-	std::string readData = grpcClient.read(pathstr, offset, size);
-	memcpy(buffer, readData.c_str(), size);
-	return strlen(readData.c_str());
+	
+	// memcpy(buffer, readData.c_str(), size);
+	return grpcClient.read(pathstr, buffer,offset, size, fi);
 }
 
 static int do_mknod(const char *path, mode_t mode, dev_t rdev)
@@ -95,8 +103,13 @@ static int do_unlink(const char *path)
 static int do_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	std::string pathstr(path);
-	std::string bufstr(path);
-	return grpcClient.write(pathstr, bufstr, size, offset, fi);
+	return grpcClient.write(pathstr, buf, size, offset, fi);
+}
+
+static int do_flush(const char *path, struct fuse_file_info *fi)
+{
+	std::string pathstr(path);
+	return grpcClient.flush(pathstr, fi);
 }
 
 static int do_utimens(const char *path, const struct timespec ts[2], struct fuse_file_info *fi)
@@ -108,6 +121,7 @@ static int do_utimens(const char *path, const struct timespec ts[2], struct fuse
 static struct fuse_operations operations;
 
 void setFuseOperations(struct fuse_operations &fo){
+	// fo.init = &xmp_init;
 	fo.getattr = &do_getattr;
 	fo.readdir = &do_readdir;
 	fo.read = &do_read; 
@@ -122,7 +136,8 @@ void setFuseOperations(struct fuse_operations &fo){
 	fo.fsync = &do_fsync;
 	fo.unlink = &do_unlink;
 	fo.write = &do_write;
-	fo.utimens = &do_utimens;
+	fo.flush = &do_flush;
+	// sfo.utimens = &do_utimens;
 }
 
 int main( int argc, char *argv[] )

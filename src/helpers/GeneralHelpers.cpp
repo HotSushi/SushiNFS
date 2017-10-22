@@ -1,6 +1,7 @@
 #include "GeneralHelpers.h"
 
 void toCstat(Stat gstat, struct stat *st){
+
 	st->st_dev = gstat.st_dev();
 	st->st_ino = gstat.st_ino();
 	st->st_mode = gstat.st_mode();
@@ -39,11 +40,13 @@ Stat toGstat(struct stat *st){
 FuseFileInfo toGFileInfo(struct fuse_file_info *fi){
 	FuseFileInfo fuseFileInfo;
 	fuseFileInfo.set_fh(fi->fh);
+	fuseFileInfo.set_flags(fi->flags);
 	return fuseFileInfo;
 }
 
 void toCFileInfo(FuseFileInfo fuseFileInfo, struct fuse_file_info *fi){
 	fi->fh = fuseFileInfo.fh();
+	fi->flags = fuseFileInfo.flags();
 }
 
 TimeSpec toGTimeSpec(const struct timespec *ts) {

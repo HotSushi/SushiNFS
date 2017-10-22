@@ -1,9 +1,17 @@
 #include <src/client/GrpcClient.h>
+#define LOG false
 
 GrpcClient::GrpcClient(std::shared_ptr<Channel> channel)
       : stub_(Grpc::NewStub(channel)) {}
 
+static std::map<int, Datastore> mainDataStore;
+
+static int bufferLimit = 65536;
+
 int GrpcClient::getAttributes(std::string path, struct stat *st){
+
+	if(LOG) std::cout <<"------------------------------------------------\n";
+    if(LOG) std::cout << "getAttributes : path passed - " << path << "\n";
 	// Container request
 	GetAttributesRequestObject getAttributesRequestObject;
 	getAttributesRequestObject.set_path(path);
@@ -12,17 +20,22 @@ int GrpcClient::getAttributes(std::string path, struct stat *st){
 
 	// Container response
 	GetAttributesResponseObject getAttributesResponseObject;
-
+	if(LOG) std::cout << "getAttributes : Calling server \n";
 	// Actual call
 	Status status = stub_->GetAttributes(&context, getAttributesRequestObject, &getAttributesResponseObject);
-
+	if(LOG) std::cout << "getAttributes : Response from server \n";
 	if(status.ok()){
+		if(LOG) std::cout << "getAttributes : converting response \n";
 		toCstat(getAttributesResponseObject.st(), st);
+		if(LOG) std::cout << "getAttributes : returning resposne \n";
 		return getAttributesResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << "getAttributes : Failed \n";
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
+
+    if(LOG) std::cout <<"------------------------------------------------\n\n";
     return -1;
 	}
 }
@@ -50,18 +63,19 @@ std::list<DirEntry> GrpcClient::readDirectory(std::string path, int &responseCod
 		return entries;
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return entries;
 	}
 }
 
-std::string GrpcClient::read(std::string path, int offset, int size){
+int GrpcClient::read(std::string path, char* buffer, int offset, int size, struct fuse_file_info *fi){
 	// Container request
 	ReadRequestObject readRequestObject;
 	readRequestObject.set_path(path);
 	readRequestObject.set_offset(offset);
 	readRequestObject.set_size(size);
+	*readRequestObject.mutable_fileinfo() = toGFileInfo(fi);
 	ClientContext context;
 
 	// Container response
@@ -70,13 +84,17 @@ std::string GrpcClient::read(std::string path, int offset, int size){
 	// Call
 	Status status = stub_->Read(&context, readRequestObject, &readResponseObject);
 
+	toCFileInfo(readResponseObject.fileinfo(), fi);
+
 	if(status.ok()){
-		return readResponseObject.data();
+		// bcopy(readResponseObject.data().c_str(), buffer, readResponseObject.data().length());
+		strncpy(buffer, readResponseObject.data().c_str(), size);
+		return readResponseObject.size();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
-    return "RPC FAILED";
+        return -1;
 	}
 
 }
@@ -98,7 +116,7 @@ int GrpcClient::makeNode(std::string path, mode_t mode, dev_t rdev){
 		return mknodResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -121,7 +139,7 @@ int GrpcClient::makeDir(std::string path, mode_t mode){
 		return mkDirResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -142,7 +160,7 @@ int GrpcClient::rmDir(std::string path){
 		return rmDirResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -164,7 +182,7 @@ int GrpcClient::rename(std::string from, std::string to){
 		return renameResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -189,7 +207,7 @@ int GrpcClient::truncate(std::string path, off_t size, struct fuse_file_info *fi
 		return truncateResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -207,14 +225,14 @@ int GrpcClient::create(std::string path, mode_t mode, struct fuse_file_info *fi)
 
 	// Call
 	Status status = stub_->Create(&context, createRequestObject, &createResponseObject);
-
+	if(LOG) std::cout <<" Success creating file \n";
 	toCFileInfo(createResponseObject.fileinfo(), fi);
-
+	if(LOG) std::cout <<" Success storing response object \n";
 	if(status.ok()){
 		return createResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -238,7 +256,7 @@ int GrpcClient::open(std::string path, struct fuse_file_info *fi){
 		return openResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -259,10 +277,11 @@ int GrpcClient::release(std::string path, struct fuse_file_info *fi){
 	toCFileInfo(releaseResponseObject.fileinfo(), fi);
 
 	if(status.ok()){
+		mainDataStore.clear();
 		return releaseResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -287,7 +306,7 @@ int GrpcClient::fsync(std::string path, int isdatasync, struct fuse_file_info* f
 		return fsyncResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -308,17 +327,34 @@ int GrpcClient::unlink(std::string path){
 		return unlinkResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
 }
 
-int GrpcClient::write(std::string path, std::string buffer, int size, int offset, struct fuse_file_info* fi)
+int GrpcClient::write(std::string path, const char *buf, int size, int offset, struct fuse_file_info* fi)
 {
+
 	WriteRequestObject writeRequestObject;
+	if(LOG) std::cout <<"------------------------------------------------\n";
+    if(LOG) std::cout << "write : path passed - " << path << "\n";
+    if(LOG) std::cout << "write : data size is - " << strlen(buf) << "\n";
+	
+	bool commitFlag = false;
+      if (fi->fh != 0) {
+        if (mainDataStore.find(fi->fh) != mainDataStore.end()) {
+            Datastore ds = mainDataStore.find(fi->fh)->second;
+            if (ds.getData().length() > bufferLimit) {
+              commitFlag = true;
+            }
+        }
+      }
+
+
+	writeRequestObject.set_flag(commitFlag);
 	writeRequestObject.set_path(path);
-	writeRequestObject.set_data(buffer);
+	writeRequestObject.set_data(buf);
 	writeRequestObject.set_offset(offset);
 	writeRequestObject.set_size(size);
 	*writeRequestObject.mutable_fileinfo() = toGFileInfo(fi);
@@ -334,10 +370,52 @@ int GrpcClient::write(std::string path, std::string buffer, int size, int offset
 	toCFileInfo(writeResponseObject.fileinfo(), fi);
 
 	if(status.ok()){
-		return writeResponseObject.status();
+		if (commitFlag) {
+			if (mainDataStore.find(fi->fh) != mainDataStore.end()) {
+	            Datastore ds = mainDataStore.find(fi->fh)->second;
+	            ds.setValues("",0,false);
+	            mainDataStore.find(fi->fh)->second = ds;
+        	}
+		} else {
+			std::string temp2(buf);
+			if (mainDataStore.find(fi->fh) != mainDataStore.end()) {
+	            Datastore ds = mainDataStore.find(fi->fh)->second;
+	            ds.setValues((ds.getData() + temp2),ds.getOriginalOffset());
+	            mainDataStore.find(fi->fh)->second = ds;
+        	} else {
+        		mainDataStore.insert(std::make_pair<int, Datastore>(fi->fh,Datastore(temp2, offset, false)));
+        	}
+		}
+		return writeResponseObject.datasize();
+	} else {
+
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
+              << std::endl;
+    return -1;
+	}
+	if(LOG) std::cout <<"------------------------------------------------\n\n";
+}
+
+int GrpcClient::flush(std::string path, struct fuse_file_info *fi){
+	FlushRequestObject flushRequestObject;
+	flushRequestObject.set_path(path);
+	*flushRequestObject.mutable_fileinfo() = toGFileInfo(fi);
+	ClientContext context;
+
+	// Container response
+	FlushResponseObject flushResponseObject;
+
+	// Call
+	Status status = stub_->Flush(&context, flushRequestObject, &flushResponseObject);
+
+	toCFileInfo(flushResponseObject.fileinfo(), fi);
+
+	if(status.ok()){
+		return flushResponseObject.status();
+		
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
@@ -348,7 +426,7 @@ int GrpcClient::utimens(std::string path,const struct timespec *ts, struct fuse_
 	UtimensRequestObject utimensRequestObject;
 	utimensRequestObject.set_path(path);
 	*utimensRequestObject.mutable_timespec() = toGTimeSpec(ts);
-	*utimensRequestObject.mutable_fileinfo() = toGFileInfo(fi);
+	// *utimensRequestObject.mutable_fileinfo() = toGFileInfo(fi);
 	
 	ClientContext context;
 
@@ -358,13 +436,13 @@ int GrpcClient::utimens(std::string path,const struct timespec *ts, struct fuse_
 	// Call
 	Status status = stub_->Utimens(&context, utimensRequestObject, &utimensResponseObject);
 
-	toCFileInfo(utimensResponseObject.fileinfo(), fi);
+	// toCFileInfo(utimensResponseObject.fileinfo(), fi);
 
 	if(status.ok()){
 		return utimensResponseObject.status();
 	}
 	else {
-		std::cout << status.error_code() << ": " << status.error_message()
+		if(LOG) std::cout << status.error_code() << ": " << status.error_message()
               << std::endl;
     return -1;
 	}
